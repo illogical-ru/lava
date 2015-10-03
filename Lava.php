@@ -21,7 +21,50 @@ class App {
 		$this->stash = new Stash;
 		$this->safe  = new Safe ($this->conf->safe());
 
-		if (method_exists($this, '__init')) $this->__init();
+		if (method_exists($this, 'init')) $this->init();
+	}
+
+	public function name () {
+		$args = func_get_args();
+		if ($this->conf->name) array_unshift($args, $this->conf->name);
+		return  join('_', $args);
+	}
+
+	public function host () {
+		return  $this->env->host;
+	}
+
+	public function home () {
+		$home = func_get_args();
+		array_unshift(
+			$home, $this->conf->home ? $this->conf->home : getcwd()
+		);
+		return  join('/', $home);
+	}
+
+	public function pub  () {
+		$pub  = func_get_args();
+		array_unshift(
+			$pub,  $this->conf->pub	? $this->conf->pub
+						: preg_replace(
+							'/\/[^\/]*$/', '',
+							$this->env->script
+						  )
+		);
+		return  join('/', $pub);
+	}
+
+	public function uri  ($uri = NULL, $query = array(), $append = NULL) {
+
+		if (! isset($uri)) $uri = $this->env->uri;
+
+		if (! preg_match('/^(?:[a-zA-Z]+:\/)?\//', $uri))
+			$uri  = $this->pub($uri);
+
+		if (  count($query) || $append)
+			$uri .=  (strpos($uri, '?') ? '&' : '?')
+				. $this->args->_query($query, $append);
+		return  $uri;
 	}
 
 	public function render ($handler) {
@@ -243,6 +286,13 @@ class Args extends Stash {
 			if ($val != '')
 				return $gpc ? stripslashes($val) : $val;
 		}
+	}
+
+	public function _query ($data, $append = FALSE) {
+		$query = $append ? $this->get()->_data() : array();
+		foreach ($data as $key => $val)
+			$query[$key] = $this->_normalize($val, FALSE);
+		return http_build_query($query);
 	}
 }
 
