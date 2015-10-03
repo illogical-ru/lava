@@ -2,6 +2,13 @@
 
 namespace Lava;
 
+/*!
+ * https://github.com/illogical-ru/lava-php
+ *
+ * Copyright 2015 illogical
+ * Released under the MIT license
+ */
+
 // PHP >= 5.3
 if (version_compare(phpversion(), '5.3') < 0)
 	die('PHP 5.3+ is required');
@@ -30,8 +37,18 @@ class App {
 		return  join('_', $args);
 	}
 
-	public function host () {
-		return  $this->env->host;
+	public function host ($scheme = NULL) {
+
+		$host = $this->env->host;
+
+		if (is_bool($scheme)) {
+			$secure =  $this->env->https
+				&& $this->env->https != 'off';
+			$scheme = 'http' . ($secure ? 's' : '');
+		}
+		if (isset  ($scheme)) $host = "${scheme}://${host}";
+
+		return  $host;
 	}
 
 	public function home () {
@@ -54,7 +71,7 @@ class App {
 		return  join('/', $pub);
 	}
 
-	public function uri  ($uri = NULL, $query = array(), $append = NULL) {
+	public function uri  ($uri = NULL, $query = NULL, $append = NULL) {
 
 		if (! isset($uri)) $uri = $this->env->uri;
 
@@ -65,6 +82,14 @@ class App {
 			$uri .=  (strpos($uri, '?') ? '&' : '?')
 				. $this->args->_query($query, $append);
 		return  $uri;
+	}
+	public function url () {
+		$url  = call_user_func_array(
+			array($this, 'uri'), func_get_args()
+		);
+		if (! preg_match('/^[a-zA-Z]+:\/\//', $url))
+			$url = $this->host(TRUE) . $url;
+		return  $url;
 	}
 
 	public function render ($handler) {
@@ -104,6 +129,13 @@ class App {
 		}
 
 		exit;
+	}
+
+	public function redirect () {
+		$url = call_user_func_array(
+			array($this, 'url'), func_get_args()
+		);
+		header("Location: ${url}", TRUE, 301);
 	}
 }
 
