@@ -41,7 +41,7 @@ class App {
 
 		$host = $this->env->host;
 
-		if (is_bool($scheme)) {
+		if ($scheme === TRUE) {
 			$secure =  $this->env->https
 				&& $this->env->https != 'off';
 			$scheme = 'http' . ($secure ? 's' : '');
@@ -76,11 +76,12 @@ class App {
 		if (! isset($uri)) $uri = $this->env->uri;
 
 		if (! preg_match('/^(?:[a-zA-Z]+:\/)?\//', $uri))
-			$uri  = $this->pub($uri);
+			$uri   = $this->pub($uri);
+		if (  is_array($query) || $append)
+			$query = $this->args->_query($query, $append);
+		if (  $query)
+			$uri  .= (strpos($uri, '?') ? '&' : '?') . $query;
 
-		if (  count($query) || $append)
-			$uri .=  (strpos($uri, '?') ? '&' : '?')
-				. $this->args->_query($query, $append);
 		return  $uri;
 	}
 	public function url () {
@@ -280,10 +281,9 @@ class Args extends Stash {
 	}
 
 	public function __get ($key) {
-		foreach (array_reverse($this->data) as $data) {
-			$val  = $data->$key;
-			if (isset($val)) return $val;
-		}
+		foreach (array_reverse($this->data) as $stash)
+			if (key_exists($key, $stash->_data()))
+				return $stash->$key;
 	}
 	public function __set  ($key, $val) {
 		return end($this->data)->$key = $val;
@@ -295,11 +295,11 @@ class Args extends Stash {
 
 		if (count($args))             return $this->__set($key, $args);
 
-		foreach (array_reverse($this->data) as $data) {
-			$vals = $data->$key();
-			if (count($vals)) break;
-		}
-		return  $vals;
+		foreach (array_reverse($this->data) as $stash)
+			if (key_exists($key, $stash->_data()))
+				return $stash->$key();
+
+		return  array();
 	}
 
 	public function _normalize ($val, $gpc = NULL) {
@@ -321,10 +321,15 @@ class Args extends Stash {
 	}
 
 	public function _query ($data, $append = FALSE) {
+
 		$query = $append ? $this->get()->_data() : array();
+
+		if (is_string($data)) parse_str($data, $data);
+
 		foreach ($data as $key => $val)
 			$query[$key] = $this->_normalize($val, FALSE);
-		return http_build_query($query);
+
+		return  http_build_query($query);
 	}
 }
 
