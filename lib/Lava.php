@@ -85,11 +85,13 @@ class App {
 		return  $uri;
 	}
 	public function url () {
+
 		$url  = call_user_func_array(
 			array($this, 'uri'), func_get_args()
 		);
 		if (! preg_match('/^[a-zA-Z]+:\/\//', $url))
 			$url = $this->host(TRUE) . $url;
+
 		return  $url;
 	}
 
