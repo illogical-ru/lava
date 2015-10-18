@@ -20,7 +20,7 @@ class App {
 		$stash,
 		$safe;
 
-	private $routes;
+	private $routes = array();
 
 	public function __construct ($conf = NULL) {
 
