@@ -20,9 +20,11 @@ class App {
 		$stash,
 		$safe;
 
+	private $routes;
+
 	public function __construct ($conf = NULL) {
 
-		$this->conf  = new Conf ($conf);
+		$this->conf  = new Stash ($conf);
 		$this->env   = new ENV;
 		$this->args  = new Args;
 		$this->stash = new Stash;
@@ -71,20 +73,24 @@ class App {
 		return  join('/', $pub);
 	}
 
-	public function uri  ($uri = NULL, $query = NULL, $append = NULL) {
+	public function uri  ($uri = NULL, $data = NULL, $append = FALSE) {
 
-		if (! isset($uri)) $uri = $this->env->uri;
+		if     (! isset($uri))
+			$uri  = $this->env->uri;
+		elseif (  isset($this->routes[$uri]))
+			$uri  = $this->routes[$uri]->uri($data);
+		elseif (  isset($data) || $append) {
+			$data = $this->args->_query($data, $append);
+			if ($data) $uri	.= (strpos($uri, '?') ? '&' : '?')
+					.   $data;
+		}
 
-		if (! preg_match('/^(?:[a-zA-Z]+:\/)?\//', $uri))
-			$uri   = $this->pub($uri);
-		if (  is_array($query) || $append)
-			$query = $this->args->_query($query, $append);
-		if (  $query)
-			$uri  .= (strpos($uri, '?') ? '&' : '?') . $query;
+		if     (! preg_match('/^(?:[a-zA-Z]+:\/)?\//', $uri))
+			$uri  = $this->pub($uri);
 
 		return  $uri;
 	}
-	public function url () {
+	public function url  () {
 
 		$url  = call_user_func_array(
 			array($this, 'uri'), func_get_args()
@@ -140,6 +146,65 @@ class App {
 		);
 		header("Location: ${url}", TRUE, 301);
 	}
+
+	public function route       ($rule, $cond = NULL) {
+		if (strpos($rule, '/') !== 0)
+			$rule = $this->pub($rule);
+		return  $this->routes[] = new Route ($rule, $cond);
+	}
+	public function route_get   ($rule) {
+		return  $this->route($rule, 'GET');
+	}
+	public function route_post  ($rule) {
+		return  $this->route($rule, 'POST');
+	}
+	public function route_match ($uri = NULL) {
+
+		$env = $this->env;
+
+		if (! isset($uri))
+			$uri = preg_replace('/\.\w+$/', '', $env->uri);
+
+		for ($i = count($this->routes); $i--;) {
+			$route = array_shift($this->routes);
+			if   ($route->name())
+				$this->routes[$route->name()] = $route;
+			else	$this->routes[]               = $route;
+		}
+
+		foreach ($this->routes as $route) {
+
+			$args = $route->test($uri, $env->_data());
+			if (is_null($args))	continue;
+
+			foreach ($args as $key => $val)
+				$this->args->$key = $val;
+
+			$to   = $route->to();
+
+			if   (count($to) == 1 && is_callable(current($to)))
+				$to     = array_shift($to);
+			else {
+				$file   = array_shift($to);
+				$method = count($to)	? array_pop($to)
+							: $route->name();
+				if (! $method)	continue;
+
+				require_once $file;
+
+				if   (count($to))
+					$class = join('\\', $to);
+				else {
+					$info  = pathinfo   ($file);
+					$class = $info['filename'];
+				}
+
+				$to     = array(new $class ($this), $method);
+			}
+
+			if   (! call_user_func($to, $this)) break;
+		}
+	}
 }
 
 class Stash {
@@ -183,8 +248,6 @@ class Stash {
 		return $this->data;
 	}
 }
-
-class Conf extends Stash {}
 
 class ENV  extends Stash {
 
@@ -324,9 +387,9 @@ class Args extends Stash {
 
 	public function _query ($data, $append = FALSE) {
 
-		$query = $append ? $this->get()->_data() : array();
+		if (! is_array($data)) parse_str($data, $data);
 
-		if (is_string($data)) parse_str($data, $data);
+		$query = $append ? $this->get()->_data() : array();
 
 		foreach ($data as $key => $val)
 			$query[$key] = $this->_normalize($val, FALSE);
@@ -376,6 +439,97 @@ class Safe {
 
 	private function _hash () {
 		return hash($this->algo, join(':', func_get_args()));
+	}
+}
+
+class Route {
+
+	private	$prefix = array(
+			':' => '[^\/]+',
+			'*' => '.+',
+		),
+		$segs, $regexp,
+		$cond   = array(),
+		$name, $to;
+
+	public function __construct ($rule, $cond = NULL) {
+
+		$prefix = preg_quote(join('', array_keys($this->prefix)));
+
+		$segs   = preg_split(
+			"/([${prefix}])(\w+)/", $rule,
+			-1, PREG_SPLIT_DELIM_CAPTURE
+		);
+		$regexp = array();
+
+		foreach ($segs as $i => $seg)
+			if     (!  ($i      % 3))
+				$regexp[] = preg_quote($seg, '/');
+			elseif (! (($i - 1) % 3)) {
+				$regexp[] = "({$this->prefix[$seg]})";
+				unset($segs[$i]);
+			}
+
+		$this->segs   = array_values($segs);
+		$this->regexp = sprintf('/^%s\/?$/', join('', $regexp));
+
+		if     (is_string($cond)) $this->cond['method'] = $cond;
+		elseif (is_array ($cond)) $this->cond           = $cond;
+	}
+
+	public function cond ($cond) {
+		foreach ($cond  as  $key => $val)
+			$this->cond[$key] = $val;
+		return  $this;
+	}
+
+	public function name () {
+		if   (func_num_args()) {
+			$this->name = func_get_arg(0);
+			return $this;
+		}
+		else	return $this->name;
+	}
+
+	public function to   () {
+		if   (func_num_args()) {
+			$this->to   = func_get_args();
+			return $this;
+		}
+		else	return $this->to;
+	}
+
+	public function test ($uri, $env) {
+
+		foreach ($this->cond as $key => $cond)
+			if     (! isset($env[$key])) {
+				if   (isset($cond))			return;
+				else					continue;
+			}
+			elseif (  is_array  ($cond)) {
+				if (! in_array  ($env[$key], $cond))	return;
+			}
+			elseif (  preg_match('/^\/.+\/[imsuxADEJSUX]*$/', $cond)) {
+				if (! preg_match($cond, $env[$key]))	return;
+			}
+			elseif (  $cond !== $env[$key])			return;
+
+		if (! preg_match($this->regexp, $uri, $matches))	return;
+
+		$args = array();
+
+		foreach ($this->segs as $i => $seg)
+			if ($i & 1) $args[$seg] = $matches[++$i / 2];
+
+		return  $args;
+	}
+
+	public function uri ($args = array()) {
+		$uri = array();
+		foreach ($this->segs as $i => $seg)
+			$uri[] = $i & 1 && isset($args[$seg])	? $args[$seg]
+								:       $seg;
+		return  join('', $uri);
 	}
 }
 
