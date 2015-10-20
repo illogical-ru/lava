@@ -5,9 +5,11 @@ Micro-Framework
 
 [Sandbox](http://lava.illogical.ru/)
 
-### new Lava\App [(config)] : lava
 
-Конструктор
+## Конструктор
+
+
+### new Lava\App [(config)] : lava
 
 ```
 $app = new Lava\App (array(
@@ -16,6 +18,10 @@ $app = new Lava\App (array(
     'pub'     => '/pub-uri',
 ));
 ```
+
+
+## Окружение
+
 
 ### lava->conf : context
 
@@ -26,13 +32,22 @@ $app = new Lava\App (array(
 Как метод, список всех значений
 
 ```
-$lava->conf->foo = 123;
-$lava->conf->bar(4, 5);
+$app->conf->foo = 123;
+$app->conf->bar(4, 5);
 
-var_export($lava->conf->foo  ); # 123
-var_export($lava->conf->foo()); # array (0 => 123)
-var_export($lava->conf->bar  ); # 5
-var_export($lava->conf->bar()); # array (0 => 4, 1 => 5)
+var_export($app->conf->foo  ); # 123
+var_export($app->conf->foo()); # array (0 => 123)
+var_export($app->conf->bar  ); # 5
+var_export($app->conf->bar()); # array (0 => 4, 1 => 5)
+```
+
+### lava->env : context
+
+Переменные окружения
+
+```
+echo       $app->env->method;       # GET
+var_export($app->env->accept());    # array (0 => 'text/html', 1 => '*/*')
 ```
 
 ### lava->host([scheme]) : host
@@ -97,7 +112,9 @@ echo $app->url('foo', array('bar' => 123)), # http://example.com/sandbox/foo?bar
 echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar=123
 ```
 
+
 ## Маршруты
+
 
 ### lava->route(rule [, conditionals]) : route
 
@@ -133,3 +150,19 @@ $app  ->route('/page/:id')
 Выполняет обработчики совпавших маршрутов
 
 Если обработчик возвращает истинное значение, то продолжается проверка остальных в цепочке маршрутов
+
+
+## Рендеринг
+
+### lava->render(handlers) : void
+
+```
+$app->route('/data')->to(function($app) {
+	$app->render(array(
+		'html' => function() {
+			echo 'foo';
+		},
+		'json' => array('bar' => 123),
+	));
+});
+```
