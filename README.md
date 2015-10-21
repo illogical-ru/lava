@@ -118,9 +118,11 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 
 ### lava->route(rule [, conditionals]) : route
 
-Плейсхолдер `:name` соответствует `[^\/]+`
+Плейсхолдер `:name` соответствует `([^\/]+)`
 
-Плейсхолдер `*name` соответствует `.+`
+Плейсхолдер `#name` соответствует `([^\/]+?)(?:\.\w*)?`
+
+Плейсхолдер `*name` соответствует `(.+)`
 
 ```
 # URL: http://example.com/page/123
@@ -154,15 +156,22 @@ $app  ->route('/page/:id')
 
 ## Рендеринг
 
-### lava->render(handlers) : void
+### lava->render(handlers) : status
+
+Выполняет обработчик соответствующего типа
 
 ```
-$app->route('/data')->to(function($app) {
+$app->route('/page')->to(function($app) {
 	$app->render(array(
-		'html' => function() {
-			echo 'foo';
-		},
+		'html' => 'HTML CONTENT',
 		'json' => array('bar' => 123),
+		function ($app) {
+			echo 'OTHER TYPE: ' . $app->type();
+		},
 	));
 });
+
+$app->route_match('/page.html');	# HTML CONTENT
+$app->route_match('/page.json');	# {"bar":123}
+$app->route_match('/page.xml');		# OTHER TYPE: xml
 ```
