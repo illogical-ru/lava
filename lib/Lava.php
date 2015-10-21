@@ -18,9 +18,19 @@ class App {
 
 	public  $conf, $env, $args,
 		$stash,
+
 		$safe;
 
-	private $routes = array();
+	private $routes = array(),
+
+		$types  = array(
+			'text'  => 'text/plain',
+			'html'  => 'text/html',
+			'js'    => 'text/javascript',
+			'json'  => 'application/json',
+			'jsonp' => 'application/javascript',
+			'xml'   => 'application/xml',
+		);
 
 	public function __construct ($conf = NULL) {
 
@@ -95,44 +105,45 @@ class App {
 		return  $url;
 	}
 
-	public function type ($name = NULL) {
+	public function type ($type = NULL) {
 
-		$has_name = isset($name);
+		if     (  isset($type)) {
 
-		if   (! ($has_name || $this->env->is_rewrite))
-			$type = $this->args->type;
-		else {
-			if (! $has_name) $name = $this->env->uri;
-			preg_match('/\.(\w*)$/', $name, $match);
-			$type = count($match) ? end($match) : NULL;
+			$type = strtolower($type);
+
+			if (isset($this->types[$type]))
+				$type  = $this->types[$type];
+			if (      $this->conf->charset)
+				$type .= "; charset={$this->conf->charset}";
+
+			return "Content-Type: ${type}";
 		}
-		if   (! ($has_name || isset($type)))
+		elseif (  $this->env->is_rewrite) {
+			if (preg_match('/\.(\w*)$/', $this->env->uri, $match))
+				$type  = end($match);
+		}
+		else	$type = $this->args->type;
+
+		if     (! isset($type))
 			$type = $this->conf->type;
 
-		return  strtolower($type);
+		return	strtolower($type);
 	}
 
 	public function render ($handler) {
 
 		$type = $this->type();
 
-		if     (isset($handler[$type]))	$handler = $handler[$type];
-		elseif (isset($handler[    0]))	$handler = $handler[    0];
-		else				return;
+		if     (  isset($handler[$type]))	$handler = $handler[$type];
+		elseif (  isset($handler[    0])) 	$handler = $handler[    0];
+		else					return;
 
-		if     ($type == 'html')	$mime    = 'text/html';
-		elseif ($type == 'js')		$mime    = 'text/javascript';
-		elseif ($type == 'json')	$mime    = 'application/json';
-		elseif ($type == 'jsonp')	$mime    = 'application/javascript';
-		else				$mime    = 'text/plain';
-
-		if     ($this->conf->charset)
-			$mime .= '; charset=' . $this->conf->charset;
-
-		header("Content-Type: ${mime}");
-		header('Expires: 0');
-		header('Cache-Control: no-store, no-cache, must-revalidate');
-		header('Pragma: no-cache');
+		if     (! headers_sent()) {
+			header($this->type($type));
+			header('Expires: 0');
+			header('Cache-Control: no-store, no-cache, must-revalidate');
+			header('Pragma: no-cache');
+		}
 
 		$data =   is_callable   ($handler)
 			? call_user_func($handler, $this)
@@ -143,7 +154,7 @@ class App {
 			else			echo             $data;
 		}
 
-		exit;
+		return  TRUE;
 	}
 
 	public function redirect () {
@@ -257,7 +268,7 @@ class Stash {
 	}
 }
 
-class ENV  extends Stash {
+class ENV extends Stash {
 
 	public function __construct () {
 
@@ -453,9 +464,9 @@ class Safe {
 class Route {
 
 	private	$placeholder = array(
-			':'   => '[^\/]+',
-			'#'   => '[^\/]+?',
-			'*'   => '.+',
+			':'   => '([^\/]+)',
+			'#'   => '([^\/]+?)(?:\.\w*)?',
+			'*'   => '(.+)',
 		),
 		$cond        = array(),
 		$segs, $regexp,
@@ -467,24 +478,27 @@ class Route {
 		$prefix      = preg_quote(join('', array_keys($placeholder)));
 
 		$segs        = preg_split(
-			"/([${prefix}])(\w+)/", $rule,
+			"/([${prefix}])([\w-]+)/", $rule,
 			-1, PREG_SPLIT_DELIM_CAPTURE
 		);
 		$regexp      = array();
 
 		foreach ($segs as $i => $seg)
 			if     (!  ($i      % 3))
-				$regexp[] = preg_quote($seg, '/');
+				$regexp[] = preg_quote  ($seg, '/');
 			elseif (! (($i - 1) % 3)) {
-				$regexp[] = "($placeholder[$seg])(?:\.\w*)?";
+				$regexp[] = $placeholder[$seg];
 				unset($segs[$i]);
 			}
 
-		$this->segs   = array_values($segs);
-		$this->regexp = sprintf('/^%s$/', join('', $regexp));
+		if (! preg_match('/^\/*$/', end($segs)))
+				$regexp[] = '(?:\.\w*)?';
 
-		if     (is_string($cond)) $this->cond['method'] = $cond;
-		elseif (is_array ($cond)) $this->cond           = $cond;
+		$this->segs   = array_values($segs);
+		$this->regexp = sprintf     ('/^%s$/', join('', $regexp));
+
+		if     (is_string($cond))	$this->cond['method'] = $cond;
+		elseif (is_array ($cond))	$this->cond           = $cond;
 	}
 
 	public function cond ($cond) {
@@ -512,15 +526,15 @@ class Route {
 	public function test ($uri, $env) {
 
 		foreach ($this->cond as $key => $cond)
-			if     (! isset($env[$key])) {
-				if   (isset($cond))			return;
+			if     (! isset     ($env[$key])) {
+				if   (  isset     ($cond))		return;
 				else					continue;
 			}
 			elseif (  is_array  ($cond)) {
-				if (! in_array  ($env[$key], $cond))	return;
+				if   (! in_array  ($env[$key], $cond))	return;
 			}
 			elseif (  preg_match('/^\/.+\/[imsuxADEJSUX]*$/', $cond)) {
-				if (! preg_match($cond, $env[$key]))	return;
+				if   (! preg_match($cond, $env[$key]))	return;
 			}
 			elseif (  $cond !== $env[$key])			return;
 
