@@ -28,15 +28,9 @@ class App {
 		$this->env   = new ENV;
 		$this->args  = new Args;
 		$this->stash = new Stash;
-		$this->safe  = new Safe ($this->conf->safe());
+		$this->safe  = new Safe  ($this->conf->safe());
 
 		if (method_exists($this, 'init')) $this->init();
-	}
-
-	public function name () {
-		$args = func_get_args();
-		if ($this->conf->name) array_unshift($args, $this->conf->name);
-		return  join('_', $args);
 	}
 
 	public function host ($scheme = NULL) {
@@ -48,7 +42,7 @@ class App {
 				&& $this->env->https != 'off';
 			$scheme = 'http' . ($secure ? 's' : '');
 		}
-		if (isset  ($scheme)) $host = "${scheme}://${host}";
+		if (isset($scheme)) $host = "${scheme}://${host}";
 
 		return  $host;
 	}
@@ -101,23 +95,36 @@ class App {
 		return  $url;
 	}
 
+	public function type ($name = NULL) {
+
+		$has_name = isset($name);
+
+		if   (! ($has_name || $this->env->is_rewrite))
+			$type = $this->args->type;
+		else {
+			if (! $has_name) $name = $this->env->uri;
+			preg_match('/\.(\w*)$/', $name, $match);
+			$type = count($match) ? end($match) : NULL;
+		}
+		if   (! ($has_name || isset($type)))
+			$type = $this->conf->type;
+
+		return  strtolower($type);
+	}
+
 	public function render ($handler) {
 
-		$type = $this->env->is_rewrite
-			? preg_replace(
-				'/.*?(?:\.(\w+))?$/', '${1}', $this->env->uri
-			  )
-			: $this->args->type;
+		$type = $this->type();
 
-		$type = $type ? strtolower($type) : 'html';
+		if     (isset($handler[$type]))	$handler = $handler[$type];
+		elseif (isset($handler[    0]))	$handler = $handler[    0];
+		else				return;
 
-		if     (! isset($handler[$type])) return;
-
-		if     ($type == 'html')	$mime = 'text/html';
-		elseif ($type == 'js')		$mime = 'text/javascript';
-		elseif ($type == 'json')	$mime = 'application/json';
-		elseif ($type == 'jsonp')	$mime = 'application/javascript';
-		else				$mime = 'text/plain';
+		if     ($type == 'html')	$mime    = 'text/html';
+		elseif ($type == 'js')		$mime    = 'text/javascript';
+		elseif ($type == 'json')	$mime    = 'application/json';
+		elseif ($type == 'jsonp')	$mime    = 'application/javascript';
+		else				$mime    = 'text/plain';
 
 		if     ($this->conf->charset)
 			$mime .= '; charset=' . $this->conf->charset;
@@ -127,14 +134,13 @@ class App {
 		header('Cache-Control: no-store, no-cache, must-revalidate');
 		header('Pragma: no-cache');
 
-		if     (is_callable($handler[$type]))
-			$content = call_user_func($handler[$type], $this);
-		else
-			$content =                $handler[$type];
+		$data =   is_callable   ($handler)
+			? call_user_func($handler, $this)
+			:                $handler;
 
-		if     (isset($content)) {
-			if   ($type == 'json')	echo json_encode($content);
-			else			echo             $content;
+		if     (isset($data)) {
+			if   ($type == 'json')	echo json_encode($data);
+			else			echo             $data;
 		}
 
 		exit;
@@ -158,12 +164,14 @@ class App {
 	public function route_post  ($rule) {
 		return  $this->route($rule, 'POST');
 	}
-	public function route_match ($uri = NULL) {
+	public function route_match ($uri = NULL, $env = NULL) {
 
-		$env = $this->env;
-
-		if (! isset($uri))
-			$uri = preg_replace('/\.\w+$/', '', $env->uri);
+		if (isset($env))
+			$this->env             = new Stash ($env);
+		if (isset($uri)) {
+			$this->env->uri        = $uri;
+			$this->env->is_rewrite = TRUE;
+		}
 
 		for ($i = count($this->routes); $i--;) {
 			$route = array_shift($this->routes);
@@ -174,7 +182,7 @@ class App {
 
 		foreach ($this->routes as $route) {
 
-			$args = $route->test($uri, $env->_data());
+			$args = $route->test($uri, $this->env->_data());
 			if (is_null($args))	continue;
 
 			foreach ($args as $key => $val)
@@ -444,34 +452,36 @@ class Safe {
 
 class Route {
 
-	private	$prefix = array(
-			':' => '[^\/]+',
-			'*' => '.+',
+	private	$placeholder = array(
+			':'   => '[^\/]+',
+			'#'   => '[^\/]+?',
+			'*'   => '.+',
 		),
+		$cond        = array(),
 		$segs, $regexp,
-		$cond   = array(),
 		$name, $to;
 
 	public function __construct ($rule, $cond = NULL) {
 
-		$prefix = preg_quote(join('', array_keys($this->prefix)));
+		$placeholder = $this->placeholder;
+		$prefix      = preg_quote(join('', array_keys($placeholder)));
 
-		$segs   = preg_split(
+		$segs        = preg_split(
 			"/([${prefix}])(\w+)/", $rule,
 			-1, PREG_SPLIT_DELIM_CAPTURE
 		);
-		$regexp = array();
+		$regexp      = array();
 
 		foreach ($segs as $i => $seg)
 			if     (!  ($i      % 3))
 				$regexp[] = preg_quote($seg, '/');
 			elseif (! (($i - 1) % 3)) {
-				$regexp[] = "({$this->prefix[$seg]})";
+				$regexp[] = "($placeholder[$seg])(?:\.\w*)?";
 				unset($segs[$i]);
 			}
 
 		$this->segs   = array_values($segs);
-		$this->regexp = sprintf('/^%s\/?$/', join('', $regexp));
+		$this->regexp = sprintf('/^%s$/', join('', $regexp));
 
 		if     (is_string($cond)) $this->cond['method'] = $cond;
 		elseif (is_array ($cond)) $this->cond           = $cond;
