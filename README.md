@@ -16,6 +16,11 @@ $app = new Lava\App (array(
     'charset' => 'utf-8',
     'home'    => '/path-to-home',
     'pub'     => '/pub-uri',
+    'safe'    => array(
+	'sign' => '',
+	'algo' => 'md5',
+	'salt' => '0123456789abcdef',
+    ),
 ));
 ```
 
@@ -156,6 +161,7 @@ $app  ->route('/page/:id')
 
 ## Рендеринг
 
+
 ### lava->render(handlers) : status
 
 Выполняет обработчик соответствующего типа
@@ -174,4 +180,55 @@ $app->route('/page')->to(function($app) {
 $app->route_match('/page.html');	# HTML CONTENT
 $app->route_match('/page.json');	# {"bar":123}
 $app->route_match('/page.xml');		# OTHER TYPE: xml
+```
+
+## Безопасность
+
+### lava->safe->uuid() : uuid
+
+Возвращает UUID
+
+Указать алгоритм хеширования можно в конфиге, по умолчанию `md5`
+
+```
+echo $app->safe->uuid();	# 055fb982653fef1ae76bde78b10f7221
+
+$foo = new Lava\App (array('safe' => array('algo' => 'sha256')));
+
+echo $foo->safe->uuid();	# 49f2fbf757264416475e27e0ed7c56e89c69abc9efdd639ec6d6d2d4e521a8ea
+```
+
+### lava->safe->uuid_signed() : array(signed_uuid, uuid)
+
+Возвращает подписанный UUID
+
+Указать подпись можно в конфиге, по умолчанию пустая строка
+
+```
+list($signed, $uuid) = $app->safe->uuid_signed();
+
+echo $signed;	# 31bd185d9b3929eb56ae6e4712b73962dcd6b2b55b5287117b9d65380f4146e3
+echo $uuid;		# 31bd185d9b3929eb56ae6e4712b73962
+```
+
+### lava->safe->check(signed_uuid) : uuid
+
+Проверяет подписанный UUID
+
+```
+echo $app->safe->check($signed);	# 31bd185d9b3929eb56ae6e4712b73962
+```
+
+### lava->safe->salt(size) : random_string
+
+Возвращает случайную строку заданной длины
+
+Изменить список доступных символов можно в конфиге, по умолчанию `0123456789abcdef`
+
+```
+echo $app->safe->salt(16);	# f8da4f571ec3de9d
+
+$foo = new Lava\App (array('safe' => array('salt' => '01')));
+
+echo $foo->safe->salt(16);	# 1001001110111100
 ```
