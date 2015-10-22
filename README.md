@@ -17,9 +17,9 @@ $app = new Lava\App (array(
     'home'    => '/path-to-home',
     'pub'     => '/pub-uri',
     'safe'    => array(
-	'sign' => '',
-	'algo' => 'md5',
-	'salt' => '0123456789abcdef',
+		'sign' => '',
+		'algo' => 'md5',
+		'salt' => '0123456789abcdef',
     ),
 ));
 ```
