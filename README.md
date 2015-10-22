@@ -89,7 +89,7 @@ echo $app->pub(),             # /pub-uri
 echo $app->pub('foo', 'bar'), # /pub-uri/foo/bar
 ```
 
-### lava->uri([path [, data [, append]]]) : uri
+### lava->uri([path|route [, data [, append]]]) : uri
 
 Возвращает URI
 
@@ -98,14 +98,14 @@ echo $app->pub('foo', 'bar'), # /pub-uri/foo/bar
 Флаг append добавляет текущую query_string
 
 ```
-# URI: /sandbox/?zzz=456
+# URL: http://example.com/sandbox/?zzz=456
 
 echo $app->uri(),                           # /sandbox/
 echo $app->uri('foo', array('bar' => 123)), # /sandbox/foo?bar=123
 echo $app->uri('/foo', 'bar=123', TRUE),    # /foo?zzz=456&bar=123
 ```
 
-### lava->url([path [, data [, append]]]) : url
+### lava->url([path|route [, data [, append]]]) : url
 
 Возвращает URL
 
@@ -121,42 +121,60 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 ## Маршруты
 
 
-### lava->route(rule [, conditionals]) : route
+### lava->route(rule [, cond]) : route
 
-Плейсхолдер `:name` соответствует `([^\/]+)`
+Плейсхолдер `:name` соответствует полному фрагменту `([^\/]+)`
 
-Плейсхолдер `#name` соответствует `([^\/]+?)(?:\.\w*)?`
+Плейсхолдер `#name` соответствует имени`([^\/]+?)(?:\.\w*)?`
 
-Плейсхолдер `*name` соответствует `(.+)`
+Плейсхолдер `*name` соответствует оставшейся части `(.+)`
+
+В дополнительных условиях `cond` можно добавить ограничение по переменным окружения `lava->env`
+
+Если правило начинается не со слеша, то оно будет дополнено публичной папкой `lava->pub()`
 
 ```
-# URL: http://example.com/page/123
-
-$app  ->route('/page/:id')
-      ->name ('foo')                                      # имя маршрута
-      ->to   (function($app) {                            # обработчик
-
-          // получить переменные можно из $app->args
-          $id = $app->args->id;                           # 123
-
-          // получить URI или URL маршрута можно по имени
-          echo $app->uri('foo', array('id' => $id + 1));  # /page/124
+$app  ->route('/:node1/#node2/*node3')
+      ->to   (function($app) {				// обработчик
+			echo $app->args->node1;			#  foo1.bar
+			echo $app->args->node2;			#  foo2
+			echo $app->args->node3;			#  foo3.bar/foo4.bar
       });
+
+// поиск маршрута
+$app->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
+
+
+// ограничение по окружению
+$app->route('/foo', array(
+	'user_addr'  => '127.0.0.1',			// если пользователь локальный
+	'method'     => array('GET', 'HEAD'),	// если метод GET или HEAD
+	'user_agent' => '/^Mozilla/',			// если браузер Mozilla
+));
+
+// ограничение только по методу
+$app->route('/foo', 'DELETE');
 ```
 
 ### lava->route_get(rule) : route
 
-Аналог lava->route(rule, array('method' => 'GET'))
+Аналог `$app->route('/foo', 'GET')`
 
 ### lava->route_post(rule) : route
 
-Аналог lava->route(rule, array('method' => 'POST'))
+Аналог `$app->route('/foo', 'POST')`
 
-### lava->route_match([uri]) : void
+### lava->route_match([uri [, env]]) : void
 
 Выполняет обработчики совпавших маршрутов
 
 Если обработчик возвращает истинное значение, то продолжается проверка остальных в цепочке маршрутов
+
+```
+$app->route_match();		// будет использовано $app->env->uri
+$app->route_match('/foo/bar');
+$app->route_match('/foo', array('method' => 'POST');
+```
 
 
 ## Рендеринг
@@ -182,7 +200,17 @@ $app->route_match('/page.json');	# {"bar":123}
 $app->route_match('/page.xml');		# OTHER TYPE: xml
 ```
 
+### lava->redirect([url|uri|route [, data [, append]]]) : void
+
+Добавляет в заголовок `Location`
+
+```
+$app->redirect('/foo');
+```
+
+
 ## Безопасность
+
 
 ### lava->safe->uuid() : uuid
 
