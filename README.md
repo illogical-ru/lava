@@ -30,30 +30,48 @@ $app = new Lava\App (array(
 
 ### lava->conf : context
 
-Акцессор конфига
-
-Как свойство отдает последнее значение
-
-Как метод, список всех значений
+Конфиг
 
 ```
-$app->conf->foo = 123;
-$app->conf->bar(4, 5);
-
-var_export($app->conf->foo  ); # 123
-var_export($app->conf->foo()); # array (0 => 123)
-var_export($app->conf->bar  ); # 5
-var_export($app->conf->bar()); # array (0 => 4, 1 => 5)
+echo $app->conf->charset;	# utf-8
 ```
 
 ### lava->env : context
 
-Переменные окружения
+Окружение
 
 ```
 echo       $app->env->method;       # GET
 var_export($app->env->accept());    # array (0 => 'text/html', 1 => '*/*')
 ```
+
+### lava->args : context
+
+Переменные
+
+```
+// URL: http://example.com/sandbox/?foo=3&bar=4&foo=5
+
+echo       $app->args->foo;       # 5
+var_export($app->args->foo());    # array (0 => '3', 1 => '5')
+```
+
+### lava->stash : context
+
+Копилка
+
+Как свойство отдает последнее значение, как метод, список всех значений
+
+```
+$app->stash->foo = 123;
+$app->stash->bar(4, 5);
+
+var_export($app->stash->foo  ); # 123
+var_export($app->stash->foo()); # array (0 => 123)
+var_export($app->stash->bar  ); # 5
+var_export($app->stash->bar()); # array (0 => 4, 1 => 5)
+```
+
 
 ### lava->host([scheme]) : host
 
@@ -98,7 +116,7 @@ echo $app->pub('foo', 'bar'), # /pub-uri/foo/bar
 Флаг append добавляет текущую query_string
 
 ```
-# URL: http://example.com/sandbox/?zzz=456
+// URL: http://example.com/sandbox/?zzz=456
 
 echo $app->uri(),                           # /sandbox/
 echo $app->uri('foo', array('bar' => 123)), # /sandbox/foo?bar=123
@@ -110,7 +128,7 @@ echo $app->uri('/foo', 'bar=123', TRUE),    # /foo?zzz=456&bar=123
 Возвращает URL
 
 ```
-# URL: http://example.com/sandbox/?zzz=456
+// URL: http://example.com/sandbox/?zzz=456
 
 echo $app->url(),                           # http://example.com/sandbox/
 echo $app->url('foo', array('bar' => 123)), # http://example.com/sandbox/foo?bar=123
@@ -140,10 +158,8 @@ $app  ->route('/:node1/#node2/*node3')
 			echo $app->args->node2;			#  foo2
 			echo $app->args->node3;			#  foo3.bar/foo4.bar
       });
-
 // поиск маршрута
-$app->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
-
+$app	->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
 
 // ограничение по окружению
 $app->route('/foo', array(
@@ -174,6 +190,47 @@ $app->route('/foo', 'DELETE');
 $app->route_match();		// будет использовано $app->env->uri
 $app->route_match('/foo/bar');
 $app->route_match('/foo', array('method' => 'POST');
+```
+
+### route->cond(cond) : route
+
+Добавить к маршруту ограничение по окружению
+
+```
+$app	->route('/foo')
+		->cond (array('user_addr' => '/^192\.168\./'));
+```
+
+### route->name(name) : route
+
+Для преобразования маршрута в путь
+
+```
+$app	->route('/foo/#id')
+		->name ('bar')
+		->to   (function($app) {
+			echo $app->uri('bar', array('id' => $app->args->id + 1));	# /foo/124
+		});
+
+$app	->route_match('/foo/123');
+```
+
+### route->to(mixed) : route
+
+Обработчик маршрута
+
+```
+// функция
+$app->route('/foo')->to(function() {echo 'hello';});
+
+// файл, метод
+$app->route('/foo')->to('controller/Foo.php', 'bar');
+// имя класса должно совпадать с именем файла
+// будет создан экземпляр класса Foo и вызван метод bar
+
+// файл, класс|неймспейс, метод
+$app->route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
+// если класс отличается от имени файла или нужно указать неймспейс
 ```
 
 
