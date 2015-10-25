@@ -147,6 +147,8 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 
 Плейсхолдер `*name` соответствует оставшейся части `(.+)`
 
+Получить значение плейсхолдера `lava->args->name`
+
 В дополнительных условиях `cond` можно добавить ограничение по переменным окружения `lava->env`
 
 Если правило начинается не со слеша, то оно будет дополнено публичной папкой `lava->pub()`
@@ -174,11 +176,19 @@ $app->route('/foo', 'DELETE');
 
 ### lava->route_get(rule) : route
 
-Аналог `$app->route('/foo', 'GET')`
+Ограничить маршрут методом GET
+
+```
+$app->route_get ('/foo');
+// аналог
+$app->route     ('/foo', 'GET');
+```
 
 ### lava->route_post(rule) : route
 
-Аналог `$app->route('/foo', 'POST')`
+```
+$app->route_post('/foo');
+```
 
 ### lava->route_match([uri [, env]]) : void
 
@@ -203,13 +213,14 @@ $app	->route('/foo')
 
 ### route->name(name) : route
 
-Для преобразования маршрута в путь
+Служит для преобразования маршрута в путь
 
 ```
 $app	->route('/foo/#id')
 		->name ('bar')
 		->to   (function($app) {
-			echo $app->uri('bar', array('id' => $app->args->id + 1));	# /foo/124
+			$id = $app->args->id;							// 123
+			echo $app->uri('bar', array('id' => $id + 1));	#  /foo/124
 		});
 
 $app	->route_match('/foo/123');
@@ -237,18 +248,16 @@ $app->route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
 ## Рендеринг
 
 
-### lava->render(handlers) : status
+### lava->render(handlers) : has_handler
 
-Выполняет обработчик соответствующего типа
+Выполняет обработчик с ключом `lava->type()`, если не существует, то с индексом `0`
 
 ```
 $app->route('/page')->to(function($app) {
 	$app->render(array(
 		'html' => 'HTML CONTENT',
 		'json' => array('bar' => 123),
-		function ($app) {
-			echo 'OTHER TYPE: ' . $app->type();
-		},
+		function ($app) {echo 'OTHER TYPE: ' . $app->type();},
 	));
 });
 
@@ -290,7 +299,9 @@ echo $foo->safe->uuid();	# 49f2fbf757264416475e27e0ed7c56e89c69abc9efdd639ec6d6d
 Указать подпись можно в конфиге, по умолчанию пустая строка
 
 ```
-list($signed, $uuid) = $app->safe->uuid_signed();
+$foo = new Lava\App (array('safe' => array('sign' => 'random_string')));
+
+list($signed, $uuid) = $foo->safe->uuid_signed();
 
 echo $signed;	# 31bd185d9b3929eb56ae6e4712b73962dcd6b2b55b5287117b9d65380f4146e3
 echo $uuid;		# 31bd185d9b3929eb56ae6e4712b73962
@@ -316,4 +327,38 @@ echo $app->safe->salt(16);	# f8da4f571ec3de9d
 $foo = new Lava\App (array('safe' => array('salt' => '01')));
 
 echo $foo->safe->salt(16);	# 1001001110111100
+```
+
+
+## Валидатор
+
+### lava->test(value, queue) : status
+
+Проверка соответствия значения типу
+
+Допустимые типы:
+
+- int[:size[:unsigned]]
+- tinyint[:unsigned]
+- smallint[:unsigned]
+- mediumint[:unsigned]
+- integer[:unsigned]
+- bigint[:unsigned]
+- numeric[:precision[:scale]]
+- boolean
+- string[:min[:max]]
+- email
+- url
+- ipv4
+- time
+- date
+- datetime
+- less_than[:number]
+- greater_than[:number]
+
+```
+// соответствие URL
+echo $app->test('http://example.com',       'url');						# 1
+// соответствие URL и ограничение длинны от 30 до 50 символов
+echo $app->test('http://example.com', array('url', 'string:30:50'));	#
 ```
