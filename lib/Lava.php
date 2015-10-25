@@ -224,10 +224,10 @@ class App {
 		}
 	}
 
-	public function test ($val, $tests) {
+	public function test ($val, $queue) {
 		$test = call_user_func_array(
 			array(new Test, 'add'),
-			is_array($tests) ? $tests : array($tests)
+			is_array($queue) ? $queue : array($queue)
 		);
 		return  $test->ok($val);
 	}
@@ -683,7 +683,7 @@ class Test {
 	}
 	public static function is_datetime ($val) {
 		return	   is_string ($val)
-			&& preg_match('/^(\S+)\s+(\S+)$/',     $val, $match)
+			&& preg_match('/^(\S+)\s(\S+)$/',      $val, $match)
 			&& self::is_date($match[1])
 			&& self::is_time($match[2]);
 	}
