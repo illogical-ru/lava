@@ -145,10 +145,8 @@ class App {
 			header('Pragma: no-cache');
 		}
 
-		$data =   is_callable   ($handler)
-			? call_user_func($handler, $this)
-			:                $handler;
-
+		$data = is_callable($handler)	? call_user_func($handler, $this)
+						:                $handler;
 		if     (isset($data)) {
 			if   ($type == 'json')	echo json_encode($data);
 			else			echo             $data;
@@ -554,6 +552,125 @@ class Route {
 			$uri[] = $i & 1 && isset($args[$seg])	? $args[$seg]
 								:       $seg;
 		return  join('', $uri);
+	}
+}
+
+class Test {
+
+	private $queue = array();
+
+	public function __construct () {
+		if (func_num_args()) call_user_func_array(
+			array($this, 'add'), func_get_args()
+		);
+	}
+
+	public function __call ($key,  $args) {
+		array_unshift  ($args, $key);
+		$this->add(join(':',   $args));
+		return $this;
+	}
+
+	public function add () {
+		$tests = func_get_args();
+		foreach ($tests as $test) {
+			if     (is_callable($test))
+				$this->queue[] = $test;
+			elseif (is_object  ($test))
+				throw new \Exception('Object in Lava\Test');
+			elseif (preg_match ('/^\/.+\/[imsuxADEJSUX]*$/', $test))
+				$this->queue[] = function ($val) use ($test) {
+					return preg_match ($test,     $val);
+				};
+			else   {
+				$opts =         explode(':', $test);
+				$name = 'is_' . array_shift ($opts);
+				$self = array($this, $name);
+
+				if (! method_exists($this, $name))
+					throw new \Exception("Bad test: ${test}");
+
+				$this->queue[] = function ($val) use ($self, $opts) {
+					array_unshift($opts, $val);
+					return call_user_func_array  ($self, $opts);
+				};
+			}
+		}
+	}
+
+	public function ok () {
+		$args = func_get_args();
+		foreach ($this->queue as $test)
+			if (! call_user_func_array($test, $args)) return FALSE;
+		return  TRUE;
+	}
+
+	// tests
+
+	public static function is_int ($val, $size = 4, $unsigned = NULL) {
+		$size =    pow(256, $size);
+		return	   is_numeric($val)
+			&& $val >= ($unsigned ? 0     : -$size / 2)
+			&& $val <= ($unsigned ? $size :  $size / 2) - 1;
+	}
+	public static function is_tinyint  ($val, $unsigned = NULL) {
+		return self::is_int ($val, 1, $unsigned);
+	}
+	public static function is_smallint ($val, $unsigned = NULL) {
+		return self::is_int ($val, 2, $unsigned);
+	}
+	public static function is_mediumint($val, $unsigned = NULL) {
+		return self::is_int ($val, 3, $unsigned);
+	}
+	public static function is_integer  ($val, $unsigned = NULL) {
+		return self::is_int ($val, 4, $unsigned);
+	}
+	public static function is_bigint   ($val, $unsigned = NULL) {
+		return self::is_int ($val, 8, $unsigned);
+	}
+
+	public static function is_numeric  ($val, $prec = 0, $scale = 0) {
+		if (!  is_numeric($val)) return;
+		if (! ($prec || $scale)) return TRUE;
+		return	   $prec  && $prec <= 1000
+			&& $scale <= $prec
+			&& pow(10, $prec - $scale) > abs($val);
+	}
+
+	public static function is_boolean ($val) {
+		return is_bool($val);
+	}
+
+	public static function is_char ($val, $size = 1) {
+		return Sys::strlen($val) == $size;
+	}
+
+	public static function is_email ($val) {
+		return filter_var($val, FILTER_VALIDATE_EMAIL);
+	}
+
+	public static function is_url ($val) {
+		return filter_var($val, FILTER_VALIDATE_URL);
+	}
+
+	public static function is_ipv4 ($val) {
+		return filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
+	}
+
+	public static function is_greater_than ($val, $num = 0) {
+		return is_numeric($val) && $val > $num;
+	}
+	public static function is_less_than    ($val, $num = 0) {
+		return is_numeric($val) && $val < $num;
+	}
+}
+
+class Sys {
+	public static function strlen ($data) {
+		$mb = get_extension_funcs('mbstring');
+		return $mb && in_array('mb_strlen', $mb)
+			? mb_strlen($data)
+			:    strlen($data);
 	}
 }
 
