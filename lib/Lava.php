@@ -669,23 +669,14 @@ class Test {
 		return filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
 	}
 
-	public static function is_time ($val) {
-		return	   is_string ($val)
-			&& preg_match(
-				'/^(?:[01]?\d|2[0-3]):[0-5]?\d:[0-5]?\d$/',
-				$val
-			   );
+	public static function is_date     ($val) {
+		return Date::is_date    ($val);
 	}
-	public static function is_date ($val) {
-		return	   is_string ($val)
-			&& preg_match('/^(\d+)-(\d+)-(\d+)$/', $val, $match)
-			&& checkdate ($match[2], $match[3], $match[1]);
+	public static function is_time     ($val) {
+		return Date::is_time    ($val);
 	}
 	public static function is_datetime ($val) {
-		return	   is_string ($val)
-			&& preg_match('/^(\S+)\s(\S+)$/',      $val, $match)
-			&& self::is_date($match[1])
-			&& self::is_time($match[2]);
+		return Date::is_datetime($val);
 	}
 
 	public static function is_less_than    ($val, $num = 0) {
@@ -697,6 +688,49 @@ class Test {
 
 	public static function is_fn ($val) {
 		return is_object($val) && is_callable($val);
+	}
+}
+
+class Date {
+
+	private
+	static $offset = array(
+		's' => 1,
+		'm' => 60,
+		'h' => 3600,
+		'D' => 86400,
+		'W' => 604800,		//   7D
+		'M' => 2592000,		//  30D
+		'Y' => 31536000,	// 365D
+	);
+
+	public static function time_offset ($offset) {
+
+		if (	   preg_match('/^([-+]?\d+)(\D)$/', $offset, $match)
+			&& isset     (self::$offset[$match[2]])
+		)
+			$offset = $match[1] * self::$offset[$match[2]];
+
+		return time() + $offset;
+	}
+
+	public static function is_date ($val) {
+		return	   is_string ($val)
+			&& preg_match('/^(\d+)-(\d+)-(\d+)$/', $val, $match)
+			&& checkdate ($match[2], $match[3], $match[1]);
+	}
+	public static function is_time ($val) {
+		return	   is_string ($val)
+			&& preg_match(
+				'/^(?:[01]?\d|2[0-3]):[0-5]?\d:[0-5]?\d$/',
+				$val
+			   );
+	}
+	public static function is_datetime ($val) {
+		return	   is_string ($val)
+			&& preg_match('/^(\S+)\s(\S+)$/',      $val, $match)
+			&& self::is_date($match[1])
+			&& self::is_time($match[2]);
 	}
 }
 
