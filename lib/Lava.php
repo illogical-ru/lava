@@ -34,11 +34,12 @@ class App {
 
 	public function __construct ($conf = NULL) {
 
-		$this->conf  = new Stash ($conf);
-		$this->env   = new ENV;
-		$this->args  = new Args;
-		$this->stash = new Stash;
-		$this->safe  = new Safe  ($this->conf->safe());
+		$this->conf   = new Stash ($conf);
+		$this->env    = new ENV;
+		$this->args   = new Args;
+		$this->cookie = new Cookie;
+		$this->stash  = new Stash;
+		$this->safe   = new Safe  ($this->conf->safe());
 
 		if (method_exists($this, 'init')) $this->init();
 	}
@@ -226,8 +227,7 @@ class App {
 
 	public function test ($val, $queue) {
 		$test = call_user_func_array(
-			array(new Test, 'add'),
-			is_array($queue) ? $queue : array($queue)
+			array(new Test, 'add'), (array)$queue
 		);
 		return  $test->ok($val);
 	}
@@ -241,16 +241,16 @@ class Stash {
 
 		$args = func_num_args() == 1		? func_get_arg (0)
 							: func_get_args( );
-		if (  is_array($args))
+		if (is_array($args))
 			foreach ($args as $key => $val)
 				$this->data[$key] = $val;
 	}
 
 	public function __get  ($key) {
 
-		$data = $this->data;
+		$data = &$this->data;
 
-		if (  isset($data[$key]))
+		if (isset($data[$key]))
 			return is_array($data[$key])	? end  ($data[$key])
 							:       $data[$key];
 	}
@@ -258,16 +258,14 @@ class Stash {
 		return $this->data[$key] = $val;
 	}
 
-	public function __call ($key, $vals) {
+	public function __call ($key, $args) {
 
 		$data = &$this->data;
 
-		if (  count($vals))       $data[$key] = $vals;
+		if (count($args)) $data[$key] = $args;
 
-		if (! isset($data[$key])) return array();
-
-		return is_array($data[$key])		?       $data[$key]
-							: array($data[$key]);
+		return isset($data[$key])		? (array)$data[$key]
+							:  array();
 	}
 
 	public function _data () {
@@ -393,24 +391,6 @@ class Args extends Stash {
 		return  array();
 	}
 
-	public function _normalize ($val, $gpc = NULL) {
-
-		if   (! isset   ($gpc)) $gpc = get_magic_quotes_gpc();
-
-		if   (  is_array($val)) {
-			foreach ($val as $key => &$item) {
-				$item = $this->_normalize($item, $gpc);
-				if (! isset($item)) unset($val[$key]);
-			}
-			if (count($val)) return $val;
-		}
-		else {
-			$val = trim($val);
-			if ($val != '')
-				return $gpc ? stripslashes($val) : $val;
-		}
-	}
-
 	public function _query ($data, $append = FALSE) {
 
 		if (! is_array($data)) parse_str($data, $data);
@@ -421,6 +401,73 @@ class Args extends Stash {
 			$query[$key] = $this->_normalize($val, FALSE);
 
 		return  http_build_query($query);
+	}
+
+	private function _normalize ($val, $gpc = NULL) {
+
+		if   (! isset   ($gpc)) $gpc = get_magic_quotes_gpc();
+
+		if   (  is_array($val)) {
+			foreach ($val as $index => &$item) {
+				$item = $this->_normalize($item, $gpc);
+				if (! isset($item)) unset($val[$index]);
+			}
+			if (count($val)) return $val;
+		}
+		else {
+			$val = trim($val);
+			if ($val != '')
+				return $gpc ? stripslashes($val) : $val;
+		}
+	}
+}
+
+class Cookie extends Stash {
+
+	public function __construct () {
+		parent::__construct($_COOKIE);
+	}
+
+	public function __set  ($key, $val) {
+
+		$data = $this->_normalize($key, $val);
+		$opts = array_slice(func_get_args(), 2);
+
+		// expire
+		if (isset($opts[0])) $opts[0] = Date::time_offset($opts[0]);
+
+		$done = 0;
+
+		foreach ($data as $item)
+			$done += call_user_func_array(
+				'setcookie', array_merge($item, $opts)
+			);
+
+		return  $done;
+	}
+
+	public function __call ($key, $args) {
+		if     (count($args))
+			return call_user_func_array(
+				array      ($this, '__set'),
+				array_merge(array($key), $args)
+			);
+		elseif (isset($this->data[$key]))
+			return (array)$this->data[$key];
+		else
+			return  array();
+	}
+
+	private function _normalize ($key, $val) {
+		if   (is_array($val)) {
+			$data = array();
+			foreach ($val as $index => $item)
+				$data = array_merge($data, $this->_normalize(
+					"${key}[${index}]", $item
+				));
+			return  $data;
+		}
+		else	return  array(array($key, $val));
 	}
 }
 
