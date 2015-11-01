@@ -177,12 +177,13 @@ class App {
 	}
 	public function route_match ($uri = NULL, $env = NULL) {
 
-		if (isset($env))
+		if   (isset($env))
 			$this->env             = new Stash ($env);
-		if (isset($uri)) {
+		if   (isset($uri)) {
 			$this->env->uri        = $uri;
 			$this->env->is_rewrite = TRUE;
 		}
+		else	$uri                   = $this->env->uri;
 
 		for ($i = count($this->routes); $i--;) {
 			$route = array_shift($this->routes);
@@ -191,15 +192,17 @@ class App {
 			else	$this->routes[]               = $route;
 		}
 
+		$done = 0;
+
 		foreach ($this->routes as $route) {
 
-			$args = $route->test($uri, $this->env->_data());
+			$args   = $route->test($uri, $this->env->_data());
 			if (is_null($args))	continue;
 
 			foreach ($args as $key => $val)
 				$this->args->$key = $val;
 
-			$to   = $route->to();
+			$to     = $route->to();
 
 			if   (count($to) == 1 && Test::is_fn(current($to)))
 				$to     = array_shift($to);
@@ -221,8 +224,13 @@ class App {
 				$to     = array(new $class ($this), $method);
 			}
 
-			if   (! call_user_func($to, $this)) break;
+			$result = call_user_func($to, $this);
+
+			if ($result !== FALSE)	$done++;
+			if ($result !== TRUE)	break;
 		}
+
+		return  $done;
 	}
 
 	public function test ($val, $queue) {
