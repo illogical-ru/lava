@@ -161,7 +161,12 @@ class App {
 		$url = call_user_func_array(
 			array($this, 'url'), func_get_args()
 		);
-		header("Location: ${url}", TRUE, 301);
+		$this->render(array(
+			'html' => function () use ($url) {
+				header("Location: ${url}", TRUE, 301);
+			},
+			'json' => array('url'  =>  $url),
+		));
 	}
 
 	public function route       ($rule, $cond = NULL) {
