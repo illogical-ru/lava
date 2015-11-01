@@ -56,6 +56,33 @@ echo       $app->args->foo;       # 5
 var_export($app->args->foo());    # array (0 => '3', 1 => '5')
 ```
 
+### lava->cookie : context
+
+Куки
+
+Смещения для expire:
+
+- s - секунда
+- m - минута
+- h - час
+- D - день
+- W - неделя
+- M - месяц
+- Y - год
+
+```
+// установка
+$app->cookie->foo = 'bar';
+$app->cookie->bar = array(1, 2, 3);
+
+// чтение
+echo       $app->cookie->foo;       # bar
+var_export($app->cookie->bar());    # array (0 => '1', 1 => '2', 2 => '3')
+
+// дополнительные параметры
+$app->cookie->foo('bar', '1M');		// expire = 1 месяц
+```
+
 ### lava->stash : context
 
 Копилка
