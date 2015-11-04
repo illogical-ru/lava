@@ -169,18 +169,18 @@ class App {
 		));
 	}
 
-	public function route       ($rule, $cond = NULL) {
+	public function route       ($rule = '', $cond = NULL) {
 		if (strpos($rule, '/') !== 0)
 			$rule = $this->pub($rule);
 		return  $this->routes[] = new Route ($rule, $cond);
 	}
-	public function route_get   ($rule) {
+	public function route_get   ($rule = '') {
 		return  $this->route($rule, 'GET');
 	}
-	public function route_post  ($rule) {
+	public function route_post  ($rule = '') {
 		return  $this->route($rule, 'POST');
 	}
-	public function route_match ($uri = NULL, $env = NULL) {
+	public function route_match ($uri  = NULL, $env = NULL) {
 
 		if   (isset($env))
 			$this->env             = new Stash ($env);
