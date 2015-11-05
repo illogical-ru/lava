@@ -166,7 +166,7 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 ## Маршруты
 
 
-### lava->route(rule [, cond]) : route
+### lava->route([rule [, cond]]) : route
 
 Плейсхолдер `:name` соответствует полному фрагменту `([^\/]+)`
 
@@ -201,7 +201,7 @@ $app->route('/foo', array(
 $app->route('/foo', 'DELETE');
 ```
 
-### lava->route_get(rule) : route
+### lava->route_get([rule]) : route
 
 Ограничить маршрут методом GET
 
@@ -211,7 +211,7 @@ $app->route_get ('/foo');
 $app->route     ('/foo', 'GET');
 ```
 
-### lava->route_post(rule) : route
+### lava->route_post([rule]) : route
 
 ```
 $app->route_post('/foo');
