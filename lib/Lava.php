@@ -259,7 +259,7 @@ class Stash {
 				$this->data[$key] = $val;
 	}
 
-	public function __get  ($key) {
+	public function __get   ($key) {
 
 		$data = &$this->data;
 
@@ -267,11 +267,11 @@ class Stash {
 			return is_array($data[$key])	? end  ($data[$key])
 							:       $data[$key];
 	}
-	public function __set  ($key, $val) {
+	public function __set   ($key, $val) {
 		return $this->data[$key] = $val;
 	}
 
-	public function __call ($key, $args) {
+	public function __call  ($key, $args) {
 
 		$data = &$this->data;
 
@@ -279,6 +279,13 @@ class Stash {
 
 		return isset($data[$key])		? (array)$data[$key]
 							:  array();
+	}
+
+	public function __isset ($key) {
+		return isset($this->data[$key]);
+	}
+	public function __unset ($key) {
+		       unset($this->data[$key]);
 	}
 
 	public function _data () {
