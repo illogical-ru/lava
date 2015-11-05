@@ -161,7 +161,7 @@ class App {
 		$url = call_user_func_array(
 			array($this, 'url'), func_get_args()
 		);
-		$this->render(array(
+		return $this->render(array(
 			'html' => function () use ($url) {
 				header("Location: ${url}", TRUE, 301);
 			},
