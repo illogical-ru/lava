@@ -411,6 +411,15 @@ class Args extends Stash {
 		return  array();
 	}
 
+	public function __isset ($key) {
+		$val = $this->__get($key);
+		return isset($val);
+	}
+	public function __unset ($key) {
+		foreach ($this->data as $stash)
+			unset($stash->$key);
+	}
+
 	public function _query ($data, $append = FALSE) {
 
 		if (! is_array($data)) parse_str($data, $data);
