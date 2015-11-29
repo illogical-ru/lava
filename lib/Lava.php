@@ -23,6 +23,8 @@ class App {
 
 	private $routes = array(),
 
+		$mysql,
+
 		$types  = array(
 			'text'  => 'text/plain',
 			'html'  => 'text/html',
@@ -243,6 +245,27 @@ class App {
 			array(new Test, 'add'), (array)$queue
 		);
 		return  $test->ok($val);
+	}
+
+	public function mysql ($opts = 0) {
+
+		$conf = $this->conf;
+
+		if (  is_numeric($opts) || is_string($opts))
+			$opts = $conf->{"mysql_${opts}"}();
+
+		if (! isset($opts['charset']) && $conf->charset)
+			$opts['charset'] = str_replace(
+				'-', '', $conf->charset
+			);
+
+		ksort  ($opts);
+		$hash = hash('md5', serialize($opts));
+
+		if (! isset($this->mysql[$hash]))
+			$this->mysql[$hash] = new MySQL ($opts);
+
+		return  $this->mysql[$hash];
 	}
 }
 
@@ -807,6 +830,122 @@ class Date {
 			&& preg_match('/^(\S+)\s(\S+)$/',      $val, $match)
 			&& self::is_date($match[1])
 			&& self::is_time($match[2]);
+	}
+}
+
+class MySQL {
+
+	private $sets, $link;
+
+	public function __construct ($sets) {
+
+		$opts    = array_flip(array(
+			'host', 'username', 'passwd', 'dbname', 'port',
+		));
+		foreach ($opts as $key => $val)
+			$opts[$key] = isset($sets[$key]) ? $sets[$key] : NULL;
+
+		$this->sets = $sets;
+		$this->link = @call_user_func_array('mysqli_connect', $opts);
+
+		if (mysqli_connect_error()) {
+			throw new \Exception(mysqli_connect_error());
+			return;
+		}
+
+		if (isset($sets['charset']))
+			$this->set_charset($sets['charset']);
+
+		$this->autocommit(true);
+	}
+	public function __destruct () {
+		if ($this->link) $this->link->close();
+	}
+
+	public function sets () {
+		return $this->sets;
+	}
+	public function link () {
+		return $this->link;
+	}
+
+	public  function error    () {
+		return $this->link->error;
+	}
+	public function exception () {
+		throw new \Exception($this->error());
+	}
+
+	public function set_charset ($charset) {
+		$result =  $this->link->set_charset($charset)
+			or $this->exception();
+		return  $result;
+	}
+
+	public function query       ($query) {
+		$result =  $this->link->query      ($query)
+			or $this->exception();
+		return  $result;
+	}
+	public function multi_query ($query) {
+		$result =  $this->link->multi_query($query)
+			or $this->exception();
+		return  $result;
+	}
+
+	public function fetch_row   ($query) {
+
+		$result = $this  ->query($query);
+		$data   = $result->fetch_array(MYSQLI_NUM);
+
+		$result->close();
+
+		return $data;
+	}
+	public function fetch_assoc ($query) {
+
+		$result = $this->query($query);
+		$data   = array();
+
+		while ($row = $result->fetch_assoc()) $data[] = $row;
+		$result->free();
+
+		return $data;
+	}
+
+	public function insert_id () {
+		return	   $this->link->insert_id;
+	}
+
+	public function autocommit ($mode) {
+		$result =  $this->link->autocommit($mode)
+			or $this->exception();
+		return  $result;
+	}
+	public function begin () {
+		return	   $this->autocommit(false);
+	}
+	public function commit () {
+		$result =  $this->link->commit()
+			&& $this->autocommit(true)
+			or $this->exception();
+		return  $result;
+	}
+	public function rollback () {
+		$result =  $this->link->rollback()
+			&& $this->autocommit(true)
+			or $this->exception();
+		return  $result;
+	}
+
+	public function escape_key ($key, $quote = true) {
+		$key = str_replace('`', '``', $key);
+		return $quote  ? "`${key}`" : $key;
+	}
+	public function escape_val ($val, $quote = true) {
+		if (! isset($val)) return 'NULL';
+		$val = $this->link->real_escape_string($val);
+		return $quote  ? "'${val}'" : $val;
 	}
 }
 
