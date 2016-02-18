@@ -5,7 +5,7 @@ namespace Lava;
 /*!
  * https://github.com/illogical-ru/lava-php
  *
- * Copyright 2015 illogical
+ * Copyright illogical
  * Released under the MIT license
  */
 
@@ -95,6 +95,22 @@ class App {
 
 		return  $uri;
 	}
+	public function uri_ref_or () {
+
+		if   (	     preg_match(
+				'/^([a-z]+:\/\/[^\/]+)(([^?]*).*)/',
+				$this->env->referer,
+				$match
+			     )
+			&& ! strcasecmp($match[1],   $this->host(TRUE))
+			&&              $match[3] != $this->env->uri
+		)
+			return  $match[2];
+		else
+			return  call_user_func_array(
+				array($this, 'uri'), func_get_args()
+			);
+	}
 	public function url  () {
 
 		$url  = call_user_func_array(
@@ -158,14 +174,14 @@ class App {
 	}
 
 	public function redirect () {
-		$url = call_user_func_array(
+		$location = call_user_func_array(
 			array($this, 'url'), func_get_args()
 		);
 		return $this->render(array(
-			'html' => function () use ($url) {
-				header("Location: ${url}", TRUE, 301);
+			'json' => array('location' =>  $location),
+			function() use ($location) {
+				header ('Location: ' . $location, TRUE, 301);
 			},
-			'json' => array('url'  =>  $url),
 		));
 	}
 
@@ -731,6 +747,9 @@ class Test {
 		$len = strlen(utf8_decode($val));
 		if (!  isset($max)) $max = $min;
 		return $len >= $min && $len <= $max;
+	}
+	public static function is_char   ($val, $size = 1) {
+		return self::is_string($val, $size);
 	}
 
 	public static function is_email ($val) {
