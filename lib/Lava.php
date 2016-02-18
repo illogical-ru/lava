@@ -16,14 +16,14 @@ if (version_compare(phpversion(), '5.3') < 0)
 
 class App {
 
-	public  $conf, $env, $args,
+	public	$conf, $env, $args,
 		$stash,
-
 		$safe;
 
-	private $routes = array(),
+	private	$routes = array();
 
-		$types  = array(
+	static
+	private	$types  = array(
 			'text'  => 'text/plain',
 			'html'  => 'text/html',
 			'js'    => 'text/javascript',
@@ -128,8 +128,8 @@ class App {
 
 			$type = strtolower($type);
 
-			if (isset($this->types[$type]))
-				$type  = $this->types[$type];
+			if (isset(self::$types[$type]))
+				$type  = self::$types[$type];
 			if (      $this->conf->charset)
 				$type .= "; charset={$this->conf->charset}";
 
@@ -562,18 +562,20 @@ class Safe {
 
 class Route {
 
+	private	$cond        = array(),
+		$segs, $regexp,
+		$name, $to;
+
+	static
 	private	$placeholder = array(
 			':'   => '([^\/]+)',
 			'#'   => '([^\/]+?)(?:\.\w*)?',
 			'*'   => '(.+)',
-		),
-		$cond        = array(),
-		$segs, $regexp,
-		$name, $to;
+		);
 
 	public function __construct ($rule, $cond = NULL) {
 
-		$placeholder = $this->placeholder;
+		$placeholder = self::$placeholder;
 		$prefix      = preg_quote(join('', array_keys($placeholder)));
 
 		$segs        = preg_split(
