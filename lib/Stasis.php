@@ -14,6 +14,58 @@ if (version_compare(phpversion(), '5.3') < 0)
 	die('PHP 5.3+ is required');
 
 
+
+class Schema {
+
+	private $pdo, $error,
+		$model;
+
+
+	public function __construct ($opts) {
+
+		if (is_string($opts)) $opts = array('dsn' => $opts);
+
+		foreach (array('dsn', 'username', 'password') as $key)
+			if (! isset($opts[$key])) $opts[$key] = NULL;
+
+		$attr = array();
+
+		if (isset($opts['persistent']))
+			$attr[\PDO::ATTR_PERSISTENT] = $opts['persistent'];
+
+		try   {
+			$this->pdo = @new \PDO (
+				$opts['dsn'],
+				$opts['username'], $opts['password'],
+				$attr
+			);
+		}
+		catch (\PDOException $e) {
+			$this->error = $e->getMessage();
+			return;
+		}
+
+		if (isset($opts['charset']))
+			$this->exec("SET NAMES $opts[charset]");
+	}
+
+
+	public function model ($class, $opts = NULL) {
+
+		$hash = hash('md5', serialize(func_get_args()));
+
+		if (! isset($this->model[$hash])) {
+
+			if (! class_exists($class))
+				throw new \Exception("Model not found: ${class}");
+
+			$this->model[$hash] = new $class ($this->pdo, $opts);
+		}
+
+		return	$this->model[$hash];
+	}
+}
+
 class SQLBuilder {
 
 	private	$sql  = array(),
@@ -128,22 +180,59 @@ class SQLBuilder {
 				$union[] = $this->_val($sql);
 
 		$this->sql[] = join(
-			' UNION ' . ($all ? 'ALL ' : ''), $union
+			$all ? ' UNION ALL ' : ' UNION ', $union
 		);
 
 		return $this;
 	}
 
-	public function set   ($data) {
+	public function set ($data) {
+		$this->sql[] = 'SET ' . $this->_data($data);
+		return $this;
+	}
 
-		$data = (array)$data;
+	public function values    ($data) {
 
-		foreach ($data as $key => &$val)
-			if (is_string($key))
-				$val = $key . ' = ' . $this->_val($val);
+		$data    = (array) $data;
+		$args    = func_get_args();
 
-		$this->sql[] = 'SET ' . join(', ', $data);
+		$has_key = NULL;
 
+		foreach ($data as $key => &$val) {
+			if (is_string($key)) $has_key = TRUE;
+			$val = $this->_val($val);
+		}
+
+		$sql     = sprintf('VALUES (%s)', join(', ', $data));
+
+		if ($has_key)
+			$sql = sprintf(
+				"(%s) ${sql}", join(', ', array_keys($data))
+			);
+
+		array_shift($args);
+
+		foreach ($args as $arg) {
+
+			$arg  = (array)$arg;
+			$item =  array();
+
+			foreach (array_keys($data) as $key)
+				$item[] = $this->_val(
+					isset($arg[$key]) ? $arg[$key] : NULL
+				);
+
+			$sql .= sprintf(', (%s)', join(', ', $item));
+		}
+
+		$this->sql[] = $sql;
+
+		return $this;
+	}
+
+	public function on_duplicate_key_update ($data) {
+		$this->sql[] =	  'ON DUPLICATE KEY UPDATE '
+				. $this->_data  ($data);
 		return $this;
 	}
 
@@ -162,6 +251,17 @@ class SQLBuilder {
 			$this->bind[] = $val;
 			return '?';
 		}
+	}
+
+	private function _data ($data) {
+
+		$data = (array) $data;
+
+		foreach ($data as $key => &$val)
+			if (is_string($key))
+				$val = $key . ' = ' . $this->_val($val);
+
+		return join(', ', $data);
 	}
 
 	private function _opts ($opts) {
@@ -285,6 +385,190 @@ class SQLBuilder {
 		}
 
 		return $this;
+	}
+}
+
+class Model {
+
+	protected $pdo, $opts,
+		  $error;
+
+
+	public function __construct (\PDO $pdo, $opts = NULL) {
+		$this->pdo  = $pdo;
+		$this->opts = $opts;
+	}
+
+
+	public function error () {
+		return $this->error;
+	}
+
+	public function table () {
+
+		$opts  = $this->opts;
+
+		$table = isset   ($this->table)
+				? $this->table
+				: strtolower(preg_replace(
+					'/([^A-Z]|[A-Z]+)(?=[A-Z])/',
+					"\${1}_",
+					get_class($this)
+				  ));
+
+		if (isset($opts['prefix']))
+			$table  = "$opts[prefix]${table}";
+		if (isset($opts['postfix']))
+			$table .= "$opts[postfix]";
+
+		return  $table;
+	}
+
+
+	public function insert ($data) {
+
+		$sql = $this->_sql_builder();
+
+		$sql	->insert()
+			->into  ($this->table())
+			->values($data);
+
+		return $this->_execute($sql);
+	}
+
+	public function insert_id ($data, $name = NULL) {
+		if ($this->insert ($data))
+			return $this->pdo->lastInsertId($name);
+	}
+
+	public function insert_or_update ($data, $up = NULL) {
+
+		$sql = $this->_sql_builder();
+
+		$sql	->insert()
+			->into  ($this->table())
+			->values($data)
+			->on_duplicate_key_update(isset($up) ? $up : $data);
+
+		return $this->_execute($sql);
+	}
+
+	public function populate (array $data) {
+
+		$sql = $this->_sql_builder();
+
+		$sql	->insert()
+			->into  ($this->table());
+
+		call_user_func_array(
+			array($sql, 'values'), $data
+		);
+
+		return $this->_execute($sql);
+	}
+
+	public function select ($cond = NULL, $opts = NULL) {
+
+		$columns = isset($opts['columns'])
+			? (array)$opts['columns']
+			:  array('*');
+
+		if (isset($opts['+columns']))
+			foreach ((array)$opts['+columns'] as $column)
+				$columns[] = $column;
+
+		$sql     = $this->_sql_builder();
+
+		$sql	->select($columns)
+			->from  ($this->table());
+
+		if ($cond) $sql->where($cond);
+
+		foreach (array('group_by', 'having', 'order_by', 'limit', 'offset') as $key)
+			if (isset($opts[$key]))
+				$sql->$key($opts[$key]);
+
+		$sth     = $this->pdo->prepare((string)$sql);
+
+		$sth->setFetchMode(\PDO::FETCH_ASSOC);
+
+		if   ($sth->execute($sql()))
+			return  $sth ->fetchAll();
+		else
+			list(,, $this->error) = $sth->errorInfo();
+	}
+
+	public function single ($cond = NULL, $opts = NULL) {
+
+		$opts = (array) $opts;
+		$opts['limit'] = 1;
+
+		$data = $this->select($cond, $opts);
+		if ($data) return array_shift($data);
+	}
+
+	public function update ($data, $cond = NULL, $opts = NULL) {
+
+		$sql = $this->_sql_builder();
+
+		$sql	->update($this->table())
+			->set   ($data);
+
+		if ($cond) $sql->where($cond);
+
+		foreach (array('order_by', 'limit') as $key)
+			if (isset($opts[$key]))
+				$sql->$key($opts[$key]);
+
+		return $this->_execute($sql);
+	}
+
+	public function delete ($cond = NULL, $opts = NULL) {
+
+		$sql = $this->_sql_builder();
+
+		$sql	->delete()
+			->from  ($this->table());
+
+		if ($cond) $sql->where($cond);
+
+		foreach (array('order_by', 'limit') as $key)
+			if (isset($opts[$key]))
+				$sql->$key($opts[$key]);
+
+		return $this->_execute($sql);
+	}
+
+	public function count ($cond = NULL) {
+		$data = $this->single($cond, array(
+			'columns' => 'COUNT(*) AS count',
+		));
+		if ($data) return (int)$data['count'];
+	}
+
+	public function truncate () {
+
+		$sql = $this->_sql_builder();
+
+		$sql	->truncate()
+			->table   ($this->table());
+
+		return $this->_execute($sql);
+	}
+
+
+	protected function _sql_builder () {
+		return new SQLBuilder;
+	}
+
+	protected function _execute (SQLBuilder $sql) {
+
+		$sth    = $this->pdo->prepare((string)$sql);
+		$result = $sth      ->execute(        $sql());
+
+		list(,, $this->error) = $sth->errorInfo();
+
+		return $result;
 	}
 }
 
