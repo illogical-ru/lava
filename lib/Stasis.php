@@ -14,7 +14,6 @@ if (version_compare(phpversion(), '5.3') < 0)
 	die('PHP 5.3+ is required');
 
 
-
 class Schema {
 
 	private $pdo, $error,
@@ -49,6 +48,10 @@ class Schema {
 			$this->exec("SET NAMES $opts[charset]");
 	}
 
+
+	public function error () {
+		return $this->error;
+	}
 
 	public function model ($class, $opts = NULL) {
 
@@ -410,11 +413,7 @@ class Model {
 
 		$table = isset   ($this->table)
 				? $this->table
-				: strtolower(preg_replace(
-					'/([^A-Z]|[A-Z]+)(?=[A-Z])/',
-					"\${1}_",
-					get_class($this)
-				  ));
+				: $this->_camel2snake(get_class($this));
 
 		if (isset($opts['prefix']))
 			$table  = "$opts[prefix]${table}";
@@ -569,6 +568,14 @@ class Model {
 		list(,, $this->error) = $sth->errorInfo();
 
 		return $result;
+	}
+
+	protected function _camel2snake ($val) {
+		return strtolower(preg_replace(
+			array('/()([A-Z]+)/', '/([A-Z]+)([A-Z][^A-Z])/'),
+			"\${1}_\${2}",
+			$val
+		));
 	}
 }
 
