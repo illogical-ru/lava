@@ -53,6 +53,11 @@ class Schema {
 		return $this->error;
 	}
 
+	public function exec ($query, $bind = NULL) {
+		$sth = $this->pdo->prepare($query);
+		return $sth      ->execute($bind);
+	}
+
 	public function model ($class, $opts = NULL) {
 
 		$hash = hash('md5', serialize(func_get_args()));
@@ -286,7 +291,7 @@ class SQLBuilder {
 
 		foreach ($cols as $key => &$val)
 			if (is_string ($key))
-				$val = $key . ' ' . ($val ? 'ASC' : 'DESC');
+				$val = $key . ($val ? ' ASC' : ' DESC');
 
 		return join(', ', $cols);
 	}
