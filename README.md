@@ -357,37 +357,3 @@ $foo = new Lava\App (array('safe' => array('salt' => '01')));
 
 echo $foo->safe->salt(16);	# 1001001110111100
 ```
-
-
-## Валидатор
-
-### lava->test(value, queue) : status
-
-Проверка соответствия значения типу
-
-Допустимые типы:
-
-- int[:size[:unsigned]]
-- tinyint[:unsigned]
-- smallint[:unsigned]
-- mediumint[:unsigned]
-- integer[:unsigned]
-- bigint[:unsigned]
-- numeric[:precision[:scale]]
-- boolean
-- string[:min[:max]]
-- email
-- url
-- ipv4
-- time
-- date
-- datetime
-- less_than[:number]
-- greater_than[:number]
-
-```
-// соответствие URL
-echo $app->test('http://example.com',       'url');						# 1
-// соответствие URL и ограничение длинны от 30 до 50 символов
-echo $app->test('http://example.com', array('url', 'string:30:50'));	#
-```
