@@ -162,8 +162,9 @@ class App {
 			header('Pragma: no-cache');
 		}
 
-		$data = Test::is_fn($handler)	? call_user_func ($handler, $this)
-						:                 $handler;
+		$data = is_object($handler) && is_callable($handler)
+			? call_user_func($handler, $this)
+			:                $handler;
 
 		if     (isset($data)) {
 			if   ($type == 'json')	echo json_encode($data);
@@ -225,7 +226,7 @@ class App {
 
 			$to     = $route->to();
 
-			if   (count($to) == 1 && Test::is_fn(current($to)))
+			if   (count($to) == 1 && is_callable(current($to)))
 				$to     = array_shift($to);
 			else {
 				$file   = array_shift($to);
@@ -252,13 +253,6 @@ class App {
 		}
 
 		return  $done;
-	}
-
-	public function test ($val, $queue) {
-		$test = call_user_func_array(
-			array(new Test, 'add'), (array)$queue
-		);
-		return  $test->ok($val);
 	}
 }
 
@@ -658,136 +652,6 @@ class Route {
 	}
 }
 
-class Test {
-
-	private $queue = array();
-
-	public function __construct () {
-		if (func_num_args()) call_user_func_array(
-			array($this, 'add'), func_get_args()
-		);
-	}
-
-	public function __call ($key,  $args) {
-		array_unshift  ($args, $key);
-		$this->add(join(':',   $args));
-		return  $this;
-	}
-
-	public function add () {
-		$tests = func_get_args();
-		foreach ($tests as $test)
-			if     (self::is_fn($test))
-				$this->queue[] = $test;
-			elseif (is_object  ($test))
-				throw new \Exception('Object in Lava\Test');
-			elseif (preg_match ('/^\/.+\/[imsuxADEJSUX]*$/', $test))
-				$this->queue[] = function($val) use ($test) {
-					return preg_match($test,     $val);
-				};
-			else   {
-				$opts =         explode(':', $test);
-				$name = 'is_' . array_shift ($opts);
-				$self = array($this, $name);
-
-				if (! method_exists($this, $name))
-					throw new \Exception("Bad test: ${test}");
-
-				$this->queue[] = function($val) use ($self, $opts) {
-					array_unshift($opts, $val);
-					return call_user_func_array ($self, $opts);
-				};
-			}
-		return  $this;
-	}
-
-	public function ok () {
-		$args = func_get_args();
-		foreach ($this->queue as $test)
-			if (! call_user_func_array($test, $args)) return FALSE;
-		return  TRUE;
-	}
-
-	// tests
-
-	public static function is_int ($val, $size = 4, $unsigned = NULL) {
-		$size =    pow(256, $size);
-		return	   is_numeric($val)
-			&& $val >= ($unsigned ? 0     : -$size / 2)
-			&& $val <= ($unsigned ? $size :  $size / 2) - 1;
-	}
-	public static function is_tinyint  ($val, $unsigned = NULL) {
-		return self::is_int ($val, 1, $unsigned);
-	}
-	public static function is_smallint ($val, $unsigned = NULL) {
-		return self::is_int ($val, 2, $unsigned);
-	}
-	public static function is_mediumint($val, $unsigned = NULL) {
-		return self::is_int ($val, 3, $unsigned);
-	}
-	public static function is_integer  ($val, $unsigned = NULL) {
-		return self::is_int ($val, 4, $unsigned);
-	}
-	public static function is_bigint   ($val, $unsigned = NULL) {
-		return self::is_int ($val, 8, $unsigned);
-	}
-
-	public static function is_numeric  ($val, $prec = 0, $scale = 0) {
-		if (!  is_numeric($val)) return;
-		if (! ($prec || $scale)) return TRUE;
-		return	   $prec  && $prec <= 1000
-			&& $scale <= $prec
-			&& pow(10, $prec - $scale) > abs($val);
-	}
-
-	public static function is_boolean ($val) {
-		return is_bool($val);
-	}
-
-	public static function is_string ($val, $min, $max = NULL) {
-		if (! (is_numeric($val) || is_string($val))) return;
-		$len = strlen(utf8_decode($val));
-		if (!  isset($max)) $max = $min;
-		return $len >= $min && $len <= $max;
-	}
-	public static function is_char   ($val, $size = 1) {
-		return self::is_string($val, $size);
-	}
-
-	public static function is_email ($val) {
-		return filter_var($val, FILTER_VALIDATE_EMAIL);
-	}
-
-	public static function is_url ($val) {
-		return filter_var($val, FILTER_VALIDATE_URL);
-	}
-
-	public static function is_ipv4 ($val) {
-		return filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
-	}
-
-	public static function is_date     ($val) {
-		return Date::is_date    ($val);
-	}
-	public static function is_time     ($val) {
-		return Date::is_time    ($val);
-	}
-	public static function is_datetime ($val) {
-		return Date::is_datetime($val);
-	}
-
-	public static function is_less_than    ($val, $num = 0) {
-		return is_numeric($val) && $val < $num;
-	}
-	public static function is_greater_than ($val, $num = 0) {
-		return is_numeric($val) && $val > $num;
-	}
-
-	public static function is_fn ($val) {
-		return is_object($val) && is_callable($val);
-	}
-}
-
 class Date {
 
 	private
@@ -809,25 +673,6 @@ class Date {
 			$offset = $match[1] * self::$offset[$match[2]];
 
 		return time() + $offset;
-	}
-
-	public static function is_date ($val) {
-		return	   is_string ($val)
-			&& preg_match('/^(\d+)-(\d+)-(\d+)$/', $val, $match)
-			&& checkdate ($match[2], $match[3], $match[1]);
-	}
-	public static function is_time ($val) {
-		return	   is_string ($val)
-			&& preg_match(
-				'/^(?:[01]?\d|2[0-3]):[0-5]?\d:[0-5]?\d$/',
-				$val
-			   );
-	}
-	public static function is_datetime ($val) {
-		return	   is_string ($val)
-			&& preg_match('/^(\S+)\s(\S+)$/',      $val, $match)
-			&& self::is_date($match[1])
-			&& self::is_time($match[2]);
 	}
 }
 
