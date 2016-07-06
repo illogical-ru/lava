@@ -412,13 +412,16 @@ class Model {
 		return $this->error;
 	}
 
+	public function alias () {
+		return $this->_camel2snake(get_class($this));
+	}
 	public function table () {
 
 		$opts  = $this->opts;
 
 		$table = isset   ($this->table)
 				? $this->table
-				: $this->_camel2snake(get_class($this));
+				: $this->alias();
 
 		if (isset($opts['prefix']))
 			$table  = "$opts[prefix]${table}";
@@ -428,48 +431,49 @@ class Model {
 		return  $table;
 	}
 
-
-	public function insert ($data) {
-
-		$sql = $this->_sql_builder();
-
-		$sql	->insert()
-			->into  ($this->table())
-			->values($data);
-
-		return $this->_execute($sql);
+	public function columns () {
+		return isset($this->columns)	? $this->columns
+						: array();
 	}
 
-	public function insert_id ($data, $name = NULL) {
-		if ($this->insert ($data))
-			return $this->pdo->lastInsertId($name);
+
+	public function test ($data) {
+
+		$this->error = NULL;
+
+		if (! is_array($data))	return TRUE;
+
+		$columns = $this->columns();
+		if (! $columns)		return TRUE;
+
+		foreach ($data as $key => $val) {
+
+			if     (!  isset($columns[$key])) {
+
+				if (is_string($key))
+					$this->error[$key] = 'unknown';
+
+				continue;
+			}
+
+			$meta = $columns[$key];
+
+			if     (   isset($val)) {
+				if (isset($meta['test'])) {
+
+					$test = new Test ($meta['test']);
+
+					if (! $test->ok($val))
+						$this->error[$key] = 'invalid';
+				}
+			}
+			elseif (! (isset($meta['null']) && $meta['null']))
+				$this->error[$key] = 'null';
+		}
+
+		return ! $this->error;
 	}
 
-	public function insert_or_update ($data, $up = NULL) {
-
-		$sql = $this->_sql_builder();
-
-		$sql	->insert()
-			->into  ($this->table())
-			->values($data)
-			->on_duplicate_key_update(isset($up) ? $up : $data);
-
-		return $this->_execute($sql);
-	}
-
-	public function populate (array $data) {
-
-		$sql = $this->_sql_builder();
-
-		$sql	->insert()
-			->into  ($this->table());
-
-		call_user_func_array(
-			array($sql, 'values'), $data
-		);
-
-		return $this->_execute($sql);
-	}
 
 	public function select ($cond = NULL, $opts = NULL) {
 
@@ -484,7 +488,7 @@ class Model {
 		$sql     = $this->_sql_builder();
 
 		$sql	->select($columns)
-			->from  ($this->table());
+			->from  (array($this->table() => $this->alias()));
 
 		if ($cond) $sql->where($cond);
 
@@ -496,22 +500,106 @@ class Model {
 
 		$sth->setFetchMode(\PDO::FETCH_ASSOC);
 
-		if   ($sth->execute($sql()))
-			return  $sth ->fetchAll();
-		else
+		if (! $sth->execute($sql())) {
 			list(,, $this->error) = $sth->errorInfo();
+			return;
+		}
+
+		$data    = $sth ->fetchAll();
+
+		if (method_exists($this, 'import'))
+			foreach ($data as &$item) $this->import($item);
+
+		return $data;
 	}
 
-	public function single ($cond = NULL, $opts = NULL) {
+	public function insert ($data) {
 
-		$opts = (array) $opts;
-		$opts['limit'] = 1;
+		$data = $this->_ext_data($data);
 
-		$data = $this->select($cond, $opts);
-		if ($data) return array_shift($data);
+		if (! $this->test($data)) return;
+
+		if (  method_exists($this, 'export'))
+			$this->export($data);
+
+		$sql  = $this->_sql_builder();
+
+		$sql	->insert()
+			->into  ($this->table())
+			->values($data);
+
+		return $this->_execute($sql);
+	}
+
+	public function insert_id ($data, $name = NULL) {
+		if ($this->insert ($data))
+			return $this->pdo->lastInsertId($name);
+	}
+
+	public function insert_or_update ($data, $update) {
+
+		$error = NULL;
+		$data  = $this->_ext_data($data);
+
+		if (! $this->test($data))
+			$error['insert'] = $this->error;
+		if (! $this->test($update))
+			$error['update'] = $this->error;
+
+		$this->error = $error;
+		if (  $error)  return;
+
+		if (  method_exists($this, 'export')) {
+			$this->export($data);
+			$this->export($update);
+		}
+
+		$sql  = $this->_sql_builder();
+
+		$sql	->insert()
+			->into  ($this->table())
+			->values($data)
+			->on_duplicate_key_update($update);
+
+		return $this->_execute($sql);
+	}
+
+	public function populate (array $data) {
+
+		$error      = NULL;
+		$has_export = method_exists($this, 'export');
+
+		foreach ($data as $i => &$item) {
+
+			$item = $this->_ext_data($item);
+
+			if     (! $this->test($item))
+				$error[$i] = $this->error;
+			elseif (  $has_export)
+				$this->export($item);
+		}
+
+		$this->error = $error;
+		if (  $error)  return;
+
+		$sql        = $this->_sql_builder();
+
+		$sql	->insert()
+			->into  ($this->table());
+
+		call_user_func_array(
+			array($sql, 'values'), $data
+		);
+
+		return $this->_execute($sql);
 	}
 
 	public function update ($data, $cond = NULL, $opts = NULL) {
+
+		if (! $this->test($data)) return;
+
+		if (  method_exists($this, 'export'))
+			$this->export($data);
 
 		$sql = $this->_sql_builder();
 
@@ -541,6 +629,15 @@ class Model {
 				$sql->$key($opts[$key]);
 
 		return $this->_execute($sql);
+	}
+
+	public function single ($cond = NULL, $opts = NULL) {
+
+		$opts = (array) $opts;
+		$opts['limit'] = 1;
+
+		$data = $this->select($cond, $opts);
+		if ($data) return array_shift($data);
 	}
 
 	public function count ($cond = NULL) {
@@ -575,12 +672,170 @@ class Model {
 		return $result;
 	}
 
+	protected function _ext_data ($data) {
+
+		if (! is_array($data)) return $data;
+
+		$columns = $this->columns();
+
+		foreach ($columns as $key => $meta)
+			if     (key_exists($key,      $data))
+				continue;
+			elseif (key_exists('default', $meta)) {
+				if (isset($meta['default']))
+					$data[$key] = $meta['default'];
+			}
+			else	$data[$key] = NULL;
+
+		return $data;
+	}
+
 	protected function _camel2snake ($val) {
 		return strtolower(preg_replace(
-			array('/()([A-Z]+)/', '/([A-Z]+)([A-Z][^A-Z])/'),
+			array('/(\B)([A-Z]+)/', '/([A-Z]+)([A-Z][^A-Z])/'),
 			"\${1}_\${2}",
 			$val
 		));
+	}
+}
+
+class Test {
+
+	private $stack = array();
+
+
+	public function __construct ($tests = NULL) {
+		$this->add($tests);
+	}
+
+
+	public function __call ($key,  $args) {
+		array_unshift  ($args, $key);
+		$this->add(join(':',   $args));
+		return $this;
+	}
+
+
+	public function add ($tests) {
+
+		foreach ((array)$tests  as  $test)
+			if     (is_object  ($test) && is_callable($test))
+				$this->stack[] = $test;
+			elseif (is_object  ($test))
+				throw new \Exception('Object in Model\Test');
+			elseif (preg_match ('/^\/.*\/[imsuxADEJSUX]*$/', $test))
+				$this->stack[] = function($val) use ($test) {
+					return preg_match($test,     $val);
+				};
+			else   {
+				$opts =         explode(':', $test);
+				$name = 'is_' . array_shift ($opts);
+
+				if (! method_exists($this, $name))
+					throw new \Exception("Bad test: ${name}");
+
+				$self = array($this, $name);
+
+				$this->stack[] = function($val) use ($self, $opts) {
+					array_unshift($opts, $val);
+					return call_user_func_array ($self, $opts);
+				};
+			}
+
+		return $this;
+	}
+
+	public function ok () {
+
+		$args = func_get_args();
+
+		foreach ($this->stack as $test)
+			if (! call_user_func_array($test, $args)) return FALSE;
+
+		return  TRUE;
+	}
+
+
+	public static function is_int ($val, $size = 4, $unsigned = FALSE) {
+		$size =    pow(256, $size);
+		return	   is_numeric ($val)
+			&& $val >= ($unsigned ? 0     : -$size / 2)
+			&& $val <= ($unsigned ? $size :  $size / 2) - 1;
+	}
+	public static function is_tinyint  ($val, $unsigned = FALSE) {
+		return self::is_int ($val, 1, $unsigned);
+	}
+	public static function is_smallint ($val, $unsigned = FALSE) {
+		return self::is_int ($val, 2, $unsigned);
+	}
+	public static function is_mediumint($val, $unsigned = FALSE) {
+		return self::is_int ($val, 3, $unsigned);
+	}
+	public static function is_integer  ($val, $unsigned = FALSE) {
+		return self::is_int ($val, 4, $unsigned);
+	}
+	public static function is_bigint   ($val, $unsigned = FALSE) {
+		return self::is_int ($val, 8, $unsigned);
+	}
+
+	public static function is_numeric  ($val, $prec = 0, $scale = 0) {
+		if (!  is_numeric($val)) return;
+		if (! ($prec || $scale)) return TRUE;
+		return	   $prec  && $prec <= 1000
+			&& $scale <= $prec
+			&& pow(10, $prec - $scale) > abs($val);
+	}
+
+	public static function is_boolean ($val) {
+		return is_bool($val);
+	}
+
+	public static function is_string ($val, $min, $max = NULL) {
+		if (! (is_numeric($val) || is_string($val))) return;
+		$len = mb_strlen ($val);
+		if (!  isset($max))    $max  = $min;
+		return $len >= $min && $len <= $max;
+	}
+	public static function is_char   ($val, $size = 1) {
+		return self::is_string($val, $size);
+	}
+
+	public static function is_email ($val) {
+		return filter_var($val, FILTER_VALIDATE_EMAIL);
+	}
+
+	public static function is_url ($val) {
+		return filter_var($val, FILTER_VALIDATE_URL);
+	}
+
+	public static function is_ipv4 ($val) {
+		return filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
+	}
+
+	public static function is_date ($val) {
+		return	   is_string ($val)
+			&& preg_match('/^(\d+)-(\d+)-(\d+)$/', $val, $match)
+			&& checkdate ($match[2], $match[3], $match[1]);
+	}
+	public static function is_time ($val) {
+		return	   is_string ($val)
+			&& preg_match(
+				'/^(?:[01]?\d|2[0-3]):[0-5]?\d(?::[0-5]?\d)?$/',
+				$val
+			   );
+	}
+	public static function is_datetime ($val) {
+		return	   is_string ($val)
+			&& preg_match('/^(\S+)\s(\S+)$/',      $val, $match)
+			&& self::is_date($match[1])
+			&& self::is_time($match[2]);
+	}
+
+	public static function is_less_than    ($val, $num = 0) {
+		return is_numeric($val) && $val < $num;
+	}
+	public static function is_greater_than ($val, $num = 0) {
+		return is_numeric($val) && $val > $num;
 	}
 }
 
