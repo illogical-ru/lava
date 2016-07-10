@@ -53,16 +53,16 @@ class Schema {
 	}
 
 	public function begin () {
-		$this->pdo->beginTransaction();
+		return $this->pdo->beginTransaction();
 	}
 	public function commit () {
-		$this->pdo->commit();
+		return $this->pdo->commit();
 	}
 	public function rollback () {
-		$this->pdo->rollBack();
+		return $this->pdo->rollBack();
 	}
 	public function in_transaction () {
-		$this->pdo->inTransaction();
+		return $this->pdo->inTransaction();
 	}
 
 	public function execute ($query, $bind = NULL) {
