@@ -20,17 +20,17 @@ class Schema {
 		$model;
 
 
-	public function __construct ($opts) {
+	public function __construct ($opts, array $attr = array()) {
 
 		if (is_string($opts)) $opts = array('dsn' => $opts);
 
 		foreach (array('dsn', 'username', 'password') as $key)
 			if (! isset($opts[$key])) $opts[$key] = NULL;
 
-		$attr = array();
-
 		if (isset($opts['persistent']))
 			$attr[\PDO::ATTR_PERSISTENT] = $opts['persistent'];
+		if (isset($opts['timeout']))
+			$attr[\PDO::ATTR_TIMEOUT]    = $opts['timeout'];
 
 		try   {
 			$this->pdo = @new \PDO (
@@ -45,17 +45,50 @@ class Schema {
 		}
 
 		if (isset($opts['charset']))
-			$this->exec("SET NAMES $opts[charset]");
+			$this->pdo->exec("SET NAMES $opts[charset]");
 	}
-
 
 	public function error () {
 		return $this->error;
 	}
 
-	public function exec ($query, $bind = NULL) {
+	public function begin () {
+		$this->pdo->beginTransaction();
+	}
+	public function commit () {
+		$this->pdo->commit();
+	}
+	public function rollback () {
+		$this->pdo->rollBack();
+	}
+	public function in_transaction () {
+		$this->pdo->inTransaction();
+	}
+
+	public function execute ($query, $bind = NULL) {
+
+		$this->error = NULL;
+
 		$sth = $this->pdo->prepare($query);
-		return $sth      ->execute($bind);
+
+		if   ($sth->execute($bind))
+			return  $sth ->rowCount();
+		else
+			list(,, $this->error) = $sth->errorInfo();
+	}
+
+	public function fetch_assoc ($query, $bind = NULL) {
+
+		$this->error = NULL;
+
+		$sth = $this->pdo->prepare($query);
+
+		$sth->setFetchMode(\PDO::FETCH_ASSOC);
+
+		if   ($sth->execute($bind))
+			return  $sth ->fetchAll();
+		else
+			list(,, $this->error) = $sth->errorInfo();
 	}
 
 	public function model ($class, $opts = NULL) {
@@ -436,7 +469,6 @@ class Model {
 						: array();
 	}
 
-
 	public function test ($data) {
 
 		$this->error = NULL;
@@ -474,7 +506,6 @@ class Model {
 		return ! $this->error;
 	}
 
-
 	public function select ($cond = NULL, $opts = NULL) {
 
 		$columns = isset($opts['columns'])
@@ -500,12 +531,14 @@ class Model {
 
 		$sth->setFetchMode(\PDO::FETCH_ASSOC);
 
+		$this->error = NULL;
+
 		if (! $sth->execute($sql())) {
 			list(,, $this->error) = $sth->errorInfo();
 			return;
 		}
 
-		$data    = $sth ->fetchAll();
+		$data    = $sth->fetchAll();
 
 		if (method_exists($this, 'import'))
 			foreach ($data as &$item) $this->import($item);
@@ -664,12 +697,14 @@ class Model {
 
 	protected function _execute (SQLBuilder $sql) {
 
-		$sth    = $this->pdo->prepare((string)$sql);
-		$result = $sth      ->execute(        $sql());
+		$this->error = NULL;
 
-		list(,, $this->error) = $sth->errorInfo();
+		$sth = $this->pdo->prepare((string)$sql);
 
-		return $result;
+		if   ($sth->execute($sql()))
+			return  $sth ->rowCount();
+		else
+			list(,, $this->error) = $sth->errorInfo();
 	}
 
 	protected function _ext_data ($data) {
