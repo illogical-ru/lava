@@ -446,7 +446,9 @@ class Model {
 	}
 
 	public function alias () {
-		return $this->_camel2snake(get_class($this));
+		return $this->_camel2snake(preg_replace(
+			'/.*\\\\/', '', get_class($this)
+		));
 	}
 	public function table () {
 
@@ -826,8 +828,13 @@ class Test {
 	}
 
 	public static function is_string ($val, $min, $max = NULL) {
+
 		if (! (is_numeric($val) || is_string($val))) return;
-		$len = mb_strlen ($val);
+
+		$len = is_callable ('mb_strlen')
+			? mb_strlen($val)
+			:    strlen($val);
+
 		if (!  isset($max))    $max  = $min;
 		return $len >= $min && $len <= $max;
 	}
