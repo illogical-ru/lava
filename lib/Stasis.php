@@ -48,6 +48,11 @@ class Schema {
 			$this->pdo->exec("SET NAMES $opts[charset]");
 	}
 
+	public function __destruct () {
+		if ($this->pdo) $this->pdo = NULL;
+	}
+
+
 	public function error () {
 		return $this->error;
 	}
@@ -445,6 +450,7 @@ class Model {
 		return $this->error;
 	}
 
+
 	public function alias () {
 		return $this->_camel2snake(preg_replace(
 			'/.*\\\\/', '', get_class($this)
@@ -467,11 +473,16 @@ class Model {
 	}
 
 	public function columns () {
-		return isset($this->columns)	? $this->columns
-						: array();
+		return isset($this->columns)	?        $this->columns
+						:  array();
 	}
 
-	public function test ($data) {
+	public function unique () {
+		return isset($this->unique)	? (array)$this->unique
+						:  array();
+	}
+
+	public function test ($data, $cond = NULL) {
 
 		$this->error = NULL;
 
@@ -493,6 +504,7 @@ class Model {
 			$meta = $columns[$key];
 
 			if     (   isset($val)) {
+
 				if (isset($meta['test'])) {
 
 					$test = new Test ($meta['test']);
@@ -500,9 +512,34 @@ class Model {
 					if (! $test->ok($val))
 						$this->error[$key] = 'invalid';
 				}
+				if (isset($meta['list'])) {
+					if (! in_array($val, $meta['list']))
+						$this->error[$key] = 'invalid';
+				}
 			}
 			elseif (! (isset($meta['null']) && $meta['null']))
-				$this->error[$key] = 'null';
+						$this->error[$key] = 'null';
+		}
+
+		foreach ($this->unique() as $unique) {
+
+			$unique   = (array) $unique;
+			$restrict =  array();
+
+			foreach ($unique as $key) {
+
+				if (	 ! isset($data       [$key])
+					|| isset($this->error[$key])
+				)
+					continue 2;
+
+				$restrict[$key] = $data[$key];
+			}
+
+			if ($cond) $restrict['-not'] = $cond;
+
+			if ($this->count($restrict))
+				$this->error[join('-', $unique)] = 'exists';
 		}
 
 		return ! $this->error;

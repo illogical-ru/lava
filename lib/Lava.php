@@ -24,7 +24,7 @@ class App {
 
 	static
 	private	$types  = array(
-			'text'  => 'text/plain',
+			'txt'   => 'text/plain',
 			'html'  => 'text/html',
 			'js'    => 'text/javascript',
 			'json'  => 'application/json',
