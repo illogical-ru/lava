@@ -323,7 +323,7 @@ class ENV extends Stash {
 
 			foreach (preg_split('/[\s,]+/', $val) as $val) {
 				preg_match(
-					'/(.+?)(?:\s*;\s*q=(\d+(?:\.\d+)?))?$/',
+					'/(.*?)(?:\s*;\s*q=(\d+(?:\.\d+)?))?$/',
 					$val, $match
 				);
 				$accept[$match[1]] = isset($match[2]) ? $match[2] : 1;
