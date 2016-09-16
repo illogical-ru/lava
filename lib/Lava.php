@@ -24,13 +24,13 @@ class App {
 
 	static
 	private	$types  = array(
-			'txt'   => 'text/plain',
-			'html'  => 'text/html',
-			'js'    => 'text/javascript',
-			'json'  => 'application/json',
-			'jsonp' => 'application/javascript',
-			'xml'   => 'application/xml',
-		);
+		'txt'   => 'text/plain',
+		'html'  => 'text/html',
+		'js'    => 'text/javascript',
+		'json'  => 'application/json',
+		'jsonp' => 'application/javascript',
+		'xml'   => 'application/xml',
+	);
 
 	public function __construct ($conf = NULL) {
 
@@ -305,6 +305,28 @@ class Stash {
 
 class ENV extends Stash {
 
+	static
+	private $aliases = array(
+
+		'server_name'     => '=localhost',
+		'server_port'     => '=80',
+		'server_protocol' => '=HTTP/1.0',
+		'server_software' => '=PHP',
+
+		'user'            => 'remote_user',
+		'user_addr'       => 'remote_addr',
+		'user_port'       => 'remote_port',
+		'user_agent'      => 'http_user_agent',
+
+		'host'            => 'http_host server_name',
+		'method'          => 'request_method =GET',
+		'type'            => 'content_type',
+		'length'          => 'content_length =0',
+		'script'          => 'script_name php_self',
+		'query'           => 'query_string',
+		'referer'         => 'http_referer',
+	);
+
 	public function __construct () {
 
 		$data  = array();
@@ -332,28 +354,7 @@ class ENV extends Stash {
 			$data[$key] = array_keys($accept);
 		}
 
-		$alias = array(
-
-			'server_name'     => '=localhost',
-			'server_port'     => '=80',
-			'server_protocol' => '=HTTP/1.0',
-			'server_software' => '=PHP',
-
-			'user'            => 'remote_user',
-			'user_addr'       => 'remote_addr',
-			'user_port'       => 'remote_port',
-			'user_agent'      => 'http_user_agent',
-
-			'host'            => 'http_host server_name',
-			'method'          => 'request_method =GET',
-			'type'            => 'content_type',
-			'length'          => 'content_length =0',
-			'script'          => 'script_name php_self',
-			'query'           => 'query_string',
-			'referer'         => 'http_referer',
-		);
-
-		foreach ($alias as $key => $val) {
+		foreach (self::$aliases as $key => $val) {
 			preg_match_all('/(=)?(\S+)/', "${key} ${val}", $match);
 			foreach ($match[2] as $i => $val) {
 				if (! $match[1][$i])
@@ -562,10 +563,10 @@ class Route {
 
 	static
 	private	$placeholder = array(
-			':'   => '([^\/]+)',
-			'#'   => '([^\/]+?)(?:\.\w*)?',
-			'*'   => '(.+)',
-		);
+		':' => '([^\/]+)',
+		'#' => '([^\/]+?)(?:\.\w*)?',
+		'*' => '(.+)',
+	);
 
 	public function __construct ($rule, $cond = NULL) {
 
@@ -654,8 +655,8 @@ class Route {
 
 class Date {
 
-	private
-	static $offset = array(
+	static
+	private $offset = array(
 		's' => 1,
 		'm' => 60,
 		'h' => 3600,
@@ -665,7 +666,8 @@ class Date {
 		'Y' => 31536000,	// 365D
 	);
 
-	public static function time_offset ($offset) {
+	static
+	public function time_offset ($offset) {
 
 		if (	   preg_match('/^([-+]?\d+)(\D)$/', $offset, $match)
 			&& isset     (self::$offset[$match[2]])

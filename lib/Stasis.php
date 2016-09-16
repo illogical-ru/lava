@@ -13,6 +13,10 @@ namespace Stasis;
 if (version_compare(phpversion(), '5.3') < 0)
 	die('PHP 5.3+ is required');
 
+// PDO extension
+if (! get_extension_funcs('PDO'))
+	die('PDO is required');
+
 
 class Schema {
 
@@ -153,8 +157,12 @@ class SQLBuilder {
 		$expr = (array) $expr;
 
 		foreach ($expr as $key => &$val)
-			if (is_string($key))
-				$val = "${key} AS ${val}";
+			if   (is_string($key))
+				$val =	  $this->_escape_key($key)
+					. ' AS '
+					. $this->_escape_key($val);
+			else
+				$val =	  $this->_escape_key($val);
 
 		$this->sql[] =	  'SELECT' . $this->_opts($opts)
 				. ' '      . join(', ',   $expr);
@@ -167,8 +175,8 @@ class SQLBuilder {
 	}
 
 	public function update ($table, $opts = NULL) {
-		$this->sql[] =	  'UPDATE' . $this->_opts($opts)
-				. ' '      . $table;
+		$this->sql[] =	  'UPDATE' . $this->_opts      ($opts)
+				. ' '      . $this->_escape_key($table);
 		return $this;
 	}
 
@@ -185,13 +193,21 @@ class SQLBuilder {
 
 		foreach ($src as $key => &$val)
 			if     (is_string      ($key))
-				$val =	  "${key} AS ${val}";
+				$val =	  $this->_escape_key($key)
+					. ' AS '
+					. $this->_escape_key($val);
 			elseif ($this->_is_self($val))
-				$val =	  $this->_val($val)
+				$val =	  $this->_val       ($val)
 					. ' AS t' . ++$seq;
+			else
+				$val =	  $this->_escape_key($val);
 
 		$this->sql[] = 'FROM '  . join(', ',  $src);
 
+		return $this;
+	}
+	public function into ($dst) {
+		$this->sql[] = 'INTO '  . $this->_escape_key($dst);
 		return $this;
 	}
 
@@ -251,10 +267,15 @@ class SQLBuilder {
 
 		$sql     = sprintf('VALUES (%s)', join(', ', $data));
 
-		if ($has_key)
-			$sql = sprintf(
-				"(%s) ${sql}", join(', ', array_keys($data))
-			);
+		if ($has_key) {
+
+			$keys = array();
+
+			foreach (array_keys($data) as $key)
+				$keys[] = $this->_escape_key($key);
+
+			$sql  = sprintf("(%s) ${sql}", join(', ', $keys));
+		}
 
 		array_shift($args);
 
@@ -288,6 +309,14 @@ class SQLBuilder {
 			&& get_class($sql) == get_class($this);
 	}
 
+	public function _escape_key ($key, $quote = TRUE) {
+		if   (preg_match('/^[^\W\d]\w*$/u',   $key)) {
+			$key = str_replace('`', '``', $key);
+			return $quote  ? "`${key}`" : $key;
+		}
+		else	return $key;
+	}
+
 	private function _val ($val) {
 		if   ($this->_is_self($val)) {
 			foreach ($val() as $bind) $this->bind[] = $bind;
@@ -305,7 +334,9 @@ class SQLBuilder {
 
 		foreach ($data as $key => &$val)
 			if (is_string($key))
-				$val = $key . ' = ' . $this->_val($val);
+				$val =	  $this->_escape_key($key)
+					. ' = '
+					. $this->_val       ($val);
 
 		return join(', ', $data);
 	}
@@ -328,8 +359,11 @@ class SQLBuilder {
 		$cols = (array)$cols;
 
 		foreach ($cols as $key => &$val)
-			if (is_string ($key))
-				$val = $key . ($val ? ' ASC' : ' DESC');
+			if   (is_string($key))
+				$val =	   $this->_escape_key($key)
+					. ($val ? ' ASC' : ' DESC');
+			else
+				$val =	   $this->_escape_key($val);
 
 		return join(', ', $cols);
 	}
@@ -362,11 +396,12 @@ class SQLBuilder {
 					));
 					continue 2;
 				}
-
 				if (  $is_int_key) {
 					$last['query'][] = $val;
 					continue;
 				}
+
+				$key        = $this->_escape_key($key);
 
 				if (! is_array($val)) $val = array('=' => $val);
 
@@ -450,7 +485,6 @@ class Model {
 		return $this->error;
 	}
 
-
 	public function alias () {
 		return $this->_camel2snake(preg_replace(
 			'/.*\\\\/', '', get_class($this)
@@ -482,6 +516,25 @@ class Model {
 						:  array();
 	}
 
+	public function column_default ($name) {
+
+		$columns = $this->columns();
+		$method  = "${name}_default";
+
+		if     (isset ($columns[$name]['default']))
+			return $columns[$name]['default'];
+		elseif (method_exists($this, $method))
+			return $this->$method();
+	}
+	public function column_list ($name) {
+
+		$columns = $this->columns();
+
+		return isset($columns[$name]['list'])
+			?    $columns[$name]['list']
+			:    array();
+	}
+
 	public function test ($data, $cond = NULL) {
 
 		$this->error = NULL;
@@ -491,34 +544,33 @@ class Model {
 		$columns = $this->columns();
 		if (! $columns)		return TRUE;
 
+		$error   = NULL;
+
 		foreach ($data as $key => $val) {
 
 			if     (!  isset($columns[$key])) {
-
 				if (is_string($key))
-					$this->error[$key] = 'unknown';
-
+					$error[$key] = 'unknown';
 				continue;
 			}
 
 			$meta = $columns[$key];
 
 			if     (   isset($val)) {
-
 				if (isset($meta['test'])) {
 
 					$test = new Test ($meta['test']);
 
 					if (! $test->ok($val))
-						$this->error[$key] = 'invalid';
+						$error[$key] = 'invalid';
 				}
 				if (isset($meta['list'])) {
 					if (! in_array($val, $meta['list']))
-						$this->error[$key] = 'invalid';
+						$error[$key] = 'invalid';
 				}
 			}
 			elseif (! (isset($meta['null']) && $meta['null']))
-						$this->error[$key] = 'null';
+						$error[$key] = 'null';
 		}
 
 		foreach ($this->unique() as $unique) {
@@ -528,8 +580,8 @@ class Model {
 
 			foreach ($unique as $key) {
 
-				if (	 ! isset($data       [$key])
-					|| isset($this->error[$key])
+				if (	 ! isset($data [$key])
+					|| isset($error[$key])
 				)
 					continue 2;
 
@@ -539,23 +591,25 @@ class Model {
 			if ($cond) $restrict['-not'] = $cond;
 
 			if ($this->count($restrict))
-				$this->error[join('-', $unique)] = 'exists';
+				$error[join('-', $unique)] = 'exists';
 		}
 
-		return ! $this->error;
+		$this->error = $error;
+
+		return       ! $error;
 	}
 
 	public function select ($cond = NULL, $opts = NULL) {
 
-		$columns = isset($opts['columns'])
-			? (array)$opts['columns']
-			:  array('*');
+		$columns    = isset     ($opts['columns'])
+				? (array)$opts['columns']
+				:  array('*');
 
 		if (isset($opts['+columns']))
 			foreach ((array)$opts['+columns'] as $column)
 				$columns[] = $column;
 
-		$sql     = $this->_sql_builder();
+		$sql        = $this->_sql_builder();
 
 		$sql	->select($columns)
 			->from  (array($this->table() => $this->alias()));
@@ -563,12 +617,9 @@ class Model {
 		if ($cond) $sql->where($cond);
 
 		foreach (array('group_by', 'having', 'order_by', 'limit', 'offset') as $key)
-			if (isset($opts[$key]))
-				$sql->$key($opts[$key]);
+			if (isset($opts[$key])) $sql->$key($opts[$key]);
 
-		$sth     = $this->pdo->prepare((string)$sql);
-
-		$sth->setFetchMode(\PDO::FETCH_ASSOC);
+		$sth        = $this->pdo->prepare((string)$sql);
 
 		$this->error = NULL;
 
@@ -577,17 +628,36 @@ class Model {
 			return;
 		}
 
-		$data    = $sth->fetchAll();
+		$has_import = method_exists($this, 'import');
 
-		if (method_exists($this, 'import'))
-			foreach ($data as &$item) $this->import($item);
+		$key        = isset                ($opts['key'])
+				? array_flip((array)$opts['key'])
+				: array();
+
+		$data       = array();
+
+		while ($item = $sth->fetch(\PDO::FETCH_ASSOC)) {
+
+			if   ($has_import) $this->import($item);
+
+			if   ($key) {
+
+				foreach (array_keys($key) as $name)
+					$key[$name] = isset($item[$name])
+							?   $item[$name]
+							:   NULL;
+
+				$data[join('-', $key)] = $item;
+			}
+			else	$data[               ] = $item;
+		}
 
 		return $data;
 	}
 
 	public function insert ($data) {
 
-		$data = $this->_ext_data($data);
+		$this->_set_defaults($data);
 
 		if (! $this->test($data)) return;
 
@@ -611,7 +681,8 @@ class Model {
 	public function insert_or_update ($data, $update) {
 
 		$error = NULL;
-		$data  = $this->_ext_data($data);
+
+		$this->_set_defaults($data);
 
 		if (! $this->test($data))
 			$error['insert'] = $this->error;
@@ -643,7 +714,7 @@ class Model {
 
 		foreach ($data as $i => &$item) {
 
-			$item = $this->_ext_data($item);
+			$this->_set_defaults($item);
 
 			if     (! $this->test($item))
 				$error[$i] = $this->error;
@@ -659,9 +730,7 @@ class Model {
 		$sql	->insert()
 			->into  ($this->table());
 
-		call_user_func_array(
-			array($sql, 'values'), $data
-		);
+		call_user_func_array(array($sql, 'values'), $data);
 
 		return $this->_execute($sql);
 	}
@@ -681,8 +750,7 @@ class Model {
 		if ($cond) $sql->where($cond);
 
 		foreach (array('order_by', 'limit') as $key)
-			if (isset($opts[$key]))
-				$sql->$key($opts[$key]);
+			if (isset($opts[$key])) $sql->$key($opts[$key]);
 
 		return $this->_execute($sql);
 	}
@@ -697,8 +765,7 @@ class Model {
 		if ($cond) $sql->where($cond);
 
 		foreach (array('order_by', 'limit') as $key)
-			if (isset($opts[$key]))
-				$sql->$key($opts[$key]);
+			if (isset($opts[$key])) $sql->$key($opts[$key]);
 
 		return $this->_execute($sql);
 	}
@@ -746,22 +813,17 @@ class Model {
 			list(,, $this->error) = $sth->errorInfo();
 	}
 
-	protected function _ext_data ($data) {
+	protected function _set_defaults (&$data) {
 
-		if (! is_array($data)) return $data;
+		if (! is_array($data)) return;
 
-		$columns = $this->columns();
-
-		foreach ($columns as $key => $meta)
-			if     (key_exists($key,      $data))
-				continue;
-			elseif (key_exists('default', $meta)) {
-				if (isset($meta['default']))
-					$data[$key] = $meta['default'];
-			}
-			else	$data[$key] = NULL;
-
-		return $data;
+		foreach ($this->columns() as $key => $meta)
+			if (	   !       key_exists($key,      $data)
+				&& ! (	   key_exists('default', $meta)
+					&& is_null   ($meta['default'])
+				     )
+			)
+				$data[$key] = $this->column_default($key);
 	}
 
 	protected function _camel2snake ($val) {
