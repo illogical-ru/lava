@@ -16,8 +16,9 @@ if (version_compare(phpversion(), '5.3') < 0)
 
 class App {
 
-	public	$conf, $env, $args,
+	public	$conf,
 		$stash,
+		$env, $args, $cookie, $session,
 		$safe;
 
 	private	$routes = array();
@@ -34,12 +35,13 @@ class App {
 
 	public function __construct ($conf = NULL) {
 
-		$this->conf   = new Stash ($conf);
-		$this->env    = new ENV;
-		$this->args   = new Args;
-		$this->cookie = new Cookie;
-		$this->stash  = new Stash;
-		$this->safe   = new Safe  ($this->conf->safe());
+		$this->conf    = new Stash ($conf);
+		$this->stash   = new Stash;
+		$this->env     = new ENV;
+		$this->args    = new Args;
+		$this->cookie  = new Cookie;
+		$this->session = new Session;
+		$this->safe    = new Safe  ($this->conf->safe());
 
 		if (method_exists($this, 'init')) $this->init();
 	}
@@ -230,13 +232,14 @@ class App {
 				$to     = array_shift($to);
 			else {
 				$file   = array_shift($to);
-				$method = count($to)	? array_pop($to)
-							: $route->name();
+				$method = $to	? array_pop($to)
+						: $route->name();
+
 				if (! $method)	continue;
 
 				require_once $file;
 
-				if   (count($to))
+				if   ($to)
 					$class = join('\\', $to);
 				else {
 					$info  = pathinfo   ($file);
@@ -264,31 +267,33 @@ class Stash {
 
 		$args = func_num_args() == 1		? func_get_arg (0)
 							: func_get_args( );
-		if (is_array($args))
-			foreach ($args as $key => $val)
-				$this->data[$key] = $val;
+
+		foreach ((array)$args as $key => $val)
+			$this->__set($key, $val);
 	}
 
-	public function __get   ($key) {
+	public function __get ($key) {
 
 		$data = &$this->data;
 
 		if (isset($data[$key]))
-			return is_array($data[$key])	? end  ($data[$key])
-							:       $data[$key];
+			return is_array($data[$key])	? end($data[$key])
+							:     $data[$key];
 	}
-	public function __set   ($key, $val) {
+	public function __set ($key, $val) {
 		return $this->data[$key] = $val;
 	}
 
-	public function __call  ($key, $args) {
+	public function __call ($key, $args) {
 
 		$data = &$this->data;
 
-		if (count($args)) $data[$key] = $args;
-
-		return isset($data[$key])		? (array)$data[$key]
-							:  array();
+		if     ($args)
+			return $this->__set($key, $args);
+		elseif (isset        ($data[$key]))
+			return (array)$data[$key];
+		else
+			return  array();
 	}
 
 	public function __isset ($key) {
@@ -329,7 +334,7 @@ class ENV extends Stash {
 
 	public function __construct () {
 
-		$data  = array();
+		$data = array();
 
 		foreach ($_SERVER as $key => $val) {
 
@@ -355,7 +360,9 @@ class ENV extends Stash {
 		}
 
 		foreach (self::$aliases as $key => $val) {
+
 			preg_match_all('/(=)?(\S+)/', "${key} ${val}", $match);
+
 			foreach ($match[2] as $i => $val) {
 				if (! $match[1][$i])
 					$val = isset($data[$val]) ? $data[$val] : NULL;
@@ -366,7 +373,7 @@ class ENV extends Stash {
 			}
 		}
 
-		$uri   = isset($data['document_uri'])	? $data['document_uri']
+		$uri  = isset($data['document_uri'])	? $data['document_uri']
 							: $data['script'];
 
 		$data['uri']        = isset($data['request_uri'])
@@ -387,17 +394,12 @@ class Args extends Stash {
 		$data = array('get' => $_GET, 'post' => $_POST, array());
 
 		foreach ($data as $method => $args) {
-
-			$data[$method] = array();
-
-			foreach ($args as $key => $val) {
-				$val = $this->_normalize($val);
-				if (isset($val)) $data[$method][$key] = $val;
+			foreach ($args as $key => &$val) {
+				$val = $this->_normalize ($val);
+				if (! isset($val)) unset ($args[$key]);
 			}
-			$data[$method] = new Stash ($data[$method]);
+			$this->data[$method] = new Stash ($args);
 		}
-
-		parent::__construct($data);
 	}
 
 	public function __get ($key) {
@@ -411,9 +413,7 @@ class Args extends Stash {
 
 	public function __call ($key, $args) {
 
-		if (isset($this->data[$key])) return $this->data [$key];
-
-		if (count($args))             return $this->__set($key, $args);
+		if ($args) return $this->__set($key, $args);
 
 		foreach (array_reverse($this->data) as $stash)
 			if (key_exists($key, $stash->_data()))
@@ -427,15 +427,21 @@ class Args extends Stash {
 		return isset($val);
 	}
 	public function __unset ($key) {
-		foreach ($this->data as $stash)
-			unset($stash->$key);
+		foreach ($this->data as $stash) unset($stash->$key);
+	}
+
+	public function _get () {
+		return $this->data['get'];
+	}
+	public function _post () {
+		return $this->data['post'];
 	}
 
 	public function _query ($data, $append = FALSE) {
 
 		if (! is_array($data)) parse_str($data, $data);
 
-		$query = $append ? $this->get()->_data() : array();
+		$query = $append ? $this->_get()->_data() : array();
 
 		foreach ($data as $key => $val)
 			$query[$key] = $this->_normalize($val, FALSE);
@@ -452,7 +458,7 @@ class Args extends Stash {
 				$item = $this->_normalize($item, $gpc);
 				if (! isset($item)) unset($val[$index]);
 			}
-			if (count($val)) return $val;
+			if ($val) return $val;
 		}
 		else {
 			$val = trim($val);
@@ -465,10 +471,11 @@ class Args extends Stash {
 class Cookie extends Stash {
 
 	public function __construct () {
-		parent::__construct($_COOKIE);
+		foreach ($_COOKIE as $key  => $val)
+			$this->data [$key] =  $val;
 	}
 
-	public function __set  ($key, $val) {
+	public function __set ($key, $val) {
 
 		$data = $this->_normalize($key, $val);
 		$opts = array_slice(func_get_args(), 2);
@@ -487,12 +494,12 @@ class Cookie extends Stash {
 	}
 
 	public function __call ($key, $args) {
-		if     (count($args))
+		if     ($args)
 			return call_user_func_array(
 				array      ($this, '__set'),
 				array_merge(array($key), $args)
 			);
-		elseif (isset($this->data[$key]))
+		elseif (isset        ($this->data[$key]))
 			return (array)$this->data[$key];
 		else
 			return  array();
@@ -508,6 +515,39 @@ class Cookie extends Stash {
 			return  $data;
 		}
 		else	return  array(array($key, $val));
+	}
+}
+
+class Session {
+
+	public function __get ($key) {
+		if (isset($_SESSION[$key]))
+			return is_array($_SESSION[$key])
+				? end  ($_SESSION[$key])
+				:       $_SESSION[$key];
+	}
+	public function __set ($key,   $val) {
+		return $_SESSION[$key] = $val;
+	}
+
+	public function __call ($key, $args) {
+		if     ($args)
+			return $this->__set($key, $args);
+		elseif (isset          ($_SESSION[$key]))
+			return (array)  $_SESSION[$key];
+		else
+			return  array();
+	}
+
+	public function __isset ($key) {
+		return isset($_SESSION[$key]);
+	}
+	public function __unset ($key) {
+		       unset($_SESSION[$key]);
+	}
+
+	public function _data () {
+		return isset($_SESSION) ? $_SESSION : array();
 	}
 }
 
