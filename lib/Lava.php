@@ -50,12 +50,10 @@ class App {
 
 		$host = $this->env->host;
 
-		if ($scheme === TRUE) {
-			$secure =  $this->env->https
-				&& $this->env->https != 'off';
-			$scheme = 'http' . ($secure ? 's' : '');
-		}
-		if (isset($scheme)) $host = "${scheme}://${host}";
+		if ($scheme === TRUE)
+			$scheme = $this->env->is_https ? 'https' : 'http';
+		if (isset($scheme))
+			$host   = "${scheme}://${host}";
 
 		return  $host;
 	}
@@ -380,6 +378,9 @@ class ENV extends Stash {
 			? preg_replace('/\?.*/', '', urldecode($data['request_uri']))
 			: $uri;
 
+		$data['is_https']   = isset($data['https'])
+					&&  $data['https'] != ''
+					&&  $data['https'] != 'off';
 		$data['is_rewrite'] = $data['uri']    != $uri;
 		$data['is_post']    = $data['method'] == 'POST';
 
