@@ -463,8 +463,7 @@ class Args extends Stash {
 		}
 		else {
 			$val = trim($val);
-			if ($val != '')
-				return $gpc ? stripslashes($val) : $val;
+			return $gpc ? stripslashes($val) : $val;
 		}
 	}
 }
