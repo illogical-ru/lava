@@ -395,9 +395,8 @@ class Args extends Stash {
 		$data = array('get' => $_GET, 'post' => $_POST, array());
 
 		foreach ($data as $method => $args) {
-			foreach ($args as $key => &$val) {
+			foreach ($args as &$val) {
 				$val = $this->_normalize ($val);
-				if (! isset($val)) unset ($args[$key]);
 			}
 			$this->data[$method] = new Stash ($args);
 		}
@@ -455,15 +454,17 @@ class Args extends Stash {
 		if   (! isset   ($gpc)) $gpc = get_magic_quotes_gpc();
 
 		if   (  is_array($val)) {
-			foreach ($val as $index => &$item) {
+
+			foreach ($val as &$item)
 				$item = $this->_normalize($item, $gpc);
-				if (! isset($item)) unset($val[$index]);
-			}
-			if ($val) return $val;
+
+			return	$val;
 		}
 		else {
 			$val = trim($val);
-			return $gpc ? stripslashes($val) : $val;
+
+			if ($val != '')
+				return $gpc ? stripslashes($val) : $val;
 		}
 	}
 }
