@@ -48,8 +48,8 @@ class App {
 
 	public function host ($scheme = NULL) {
 
-		$host = $this->env->host;
-
+		$host = $this->conf->host	? $this->conf->host
+						: $this->env ->host;
 		if ($scheme === TRUE)
 			$scheme = $this->env->is_https ? 'https' : 'http';
 		if (isset($scheme))
@@ -122,26 +122,15 @@ class App {
 		return  $url;
 	}
 
-	public function type ($type = NULL) {
+	public function type () {
 
-		if     (  isset($type)) {
-
-			$type = strtolower($type);
-
-			if (isset(self::$types[$type]))
-				$type  = self::$types[$type];
-			if (      $this->conf->charset)
-				$type .= "; charset={$this->conf->charset}";
-
-			return "Content-Type: ${type}";
-		}
-		elseif (  $this->env->is_rewrite) {
-			if (preg_match('/\.(\w*)$/', $this->env->uri, $match))
-				$type  = end($match);
+		if   (  $this->env->is_rewrite) {
+			if (preg_match('/\.(\w+)$/', $this->env->uri, $match))
+				$type = end($match);
 		}
 		else	$type = $this->args->type;
 
-		if     (! isset($type))
+		if   (! isset($type))
 			$type = $this->conf->type;
 
 		return	strtolower($type);
@@ -156,7 +145,18 @@ class App {
 		else					return;
 
 		if     (! headers_sent()) {
-			header($this->type($type));
+
+			if   (isset(self::$types[$type])) {
+
+				$content_type = self::$types[$type];
+
+				if ($this->conf->charset)
+					$content_type   .= '; charset='
+							.  $this->conf->charset;
+			}
+			else	$content_type = 'application/octet-stream';
+
+			header("Content-Type: ${content_type}");
 			header('Expires: 0');
 			header('Cache-Control: no-store, no-cache, must-revalidate');
 			header('Pragma: no-cache');
