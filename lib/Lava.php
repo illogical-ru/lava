@@ -46,12 +46,16 @@ class App {
 		if (method_exists($this, 'init')) $this->init();
 	}
 
-	public function host ($scheme = NULL) {
+	public function host ($scheme = NULL, $subdomain = NULL) {
 
 		$host = $this->conf->host	? $this->conf->host
 						: $this->env ->host;
 		if ($scheme === TRUE)
 			$scheme = $this->env->is_https ? 'https' : 'http';
+		if ($subdomain)
+			$host   = join('.', array_merge(
+				(array)$subdomain, array($host)
+			));
 		if (isset($scheme))
 			$host   = "${scheme}://${host}";
 
