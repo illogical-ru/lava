@@ -62,24 +62,23 @@ class App {
 		return  $host;
 	}
 
-	public function home () {
-		$home = func_get_args();
-		array_unshift(
-			$home, $this->conf->home ? $this->conf->home : getcwd()
-		);
-		return  join('/', $home);
+	public function home ($path = NULL) {
+
+		$home = $this->conf->home	? $this->conf->home
+						: getcwd();
+
+		return join('/', array_merge(array($home), (array)$path));
 	}
 
-	public function pub  () {
-		$pub  = func_get_args();
-		array_unshift(
-			$pub,  $this->conf->pub	? $this->conf->pub
+	public function pub  ($path = NULL) {
+
+		$pub  = $this->conf->pub	? $this->conf->pub
 						: preg_replace(
 							'/\/[^\/]*$/', '',
 							$this->env->script
-						  )
-		);
-		return  join('/', $pub);
+						  );
+
+		return join('/', array_merge(array($pub),  (array)$path));
 	}
 
 	public function uri  ($uri = NULL, $data = NULL, $append = FALSE) {
