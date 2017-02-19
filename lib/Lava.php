@@ -179,12 +179,12 @@ class App {
 
 	public function redirect () {
 		$location = call_user_func_array(
-			array($this, 'url'), func_get_args()
+			array($this, 'uri'), func_get_args()
 		);
 		return $this->render(array(
 			'json' => array('location' =>  $location),
 			function() use ($location) {
-				header ('Location: ' . $location, TRUE, 301);
+				header ('Location: ' . $location, TRUE, 302);
 			},
 		));
 	}
