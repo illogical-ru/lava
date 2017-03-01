@@ -98,7 +98,7 @@ var_export($app->stash->bar()); # array (0 => 4, 1 => 5)
 ```
 
 
-### lava->host([scheme]) : host
+### lava->host([scheme [, subdomain]]) : host
 
 Возвращает хост
 
