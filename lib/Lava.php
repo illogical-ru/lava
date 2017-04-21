@@ -25,12 +25,12 @@ class App {
 
 	static
 	private	$types  = array(
+		           'application/octet-stream',
 		'txt'   => 'text/plain',
 		'html'  => 'text/html',
 		'js'    => 'text/javascript',
 		'json'  => 'application/json',
 		'jsonp' => 'application/javascript',
-		'xml'   => 'application/xml',
 	);
 
 	public function __construct ($conf = NULL) {
@@ -141,11 +141,18 @@ class App {
 
 	public function render ($handler) {
 
-		$type = $this->type();
+		$type     = $this->type();
+		$callback = $this->args->callback;
 
-		if     (  isset($handler[$type]))	$handler = $handler[$type];
-		elseif (  isset($handler[    0])) 	$handler = $handler[    0];
-		else					return;
+		if     (  isset($handler[$type]))
+			$case = $handler[$type];
+		elseif (  isset($handler[    0]))
+			$case = $handler[    0];
+		else
+			return;
+
+		if     (  $type == 'json' && $callback)
+			$type =    'jsonp';
 
 		if     (! headers_sent()) {
 
@@ -157,7 +164,7 @@ class App {
 					$content_type   .= '; charset='
 							.  $this->conf->charset;
 			}
-			else	$content_type = 'application/octet-stream';
+			else	$content_type = self::$types[0];
 
 			header("Content-Type: ${content_type}");
 			header('Expires: 0');
@@ -165,13 +172,18 @@ class App {
 			header('Pragma: no-cache');
 		}
 
-		$data = is_object($handler) && is_callable($handler)
-			? call_user_func($handler, $this)
-			:                $handler;
+		$data     = is_object($case) && is_callable($case)
+				? call_user_func($case, $this)
+				:                $case;
 
-		if     (isset($data)) {
-			if   ($type == 'json')	echo json_encode($data);
-			else			echo             $data;
+		if     (  isset($data)) {
+
+			if (preg_match('/^jsonp?$/', $type))
+				$data = json_encode($data);
+			if ($type == 'jsonp')
+				$data = "${callback}(${data});";
+
+			echo    $data;
 		}
 
 		return  TRUE;
