@@ -572,15 +572,11 @@ class Safe {
 	private $id   =  0,
 		$sign = '',
 		$algo = 'md5',
-		$salt = '0123456789abcdef',
-		$salt_len;
+		$salt = '0123456789abcdef';
 
 	public function __construct ($opts = NULL) {
-
 		foreach (array('sign', 'algo', 'salt') as $key)
 			if (isset($opts[$key])) $this->$key = $opts[$key];
-
-		$this->salt_len = strlen($this->salt) - 1;
 	}
 
 	public function uuid () {
@@ -600,9 +596,13 @@ class Safe {
 	}
 
 	public function salt ($size) {
-		$salt = '';
+
+		$salt     = '';
+		$salt_len = strlen($this->salt) - 1;
+
 		while  ($size-- > 0)
-			$salt .= $this->salt{mt_rand(0, $this->salt_len)};
+			$salt .= $this->salt{mt_rand(0, $salt_len)};
+
 		return  $salt;
 	}
 
