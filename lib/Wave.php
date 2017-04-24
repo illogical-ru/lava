@@ -848,7 +848,7 @@ class Model {
 				foreach ((array)$keys as $key) {
 
 					if (	     isset($error[$i][$key])
-						|| ! key_exists($key, $item)
+						|| ! isset($item     [$key])
 					)
 						continue 2;
 
