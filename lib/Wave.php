@@ -28,16 +28,6 @@ class PDO extends \PDO {
 	}
 
 
-	public function begin () {
-		return $this->beginTransaction();
-	}
-	public function rollback () {
-		return $this->rollBack();
-	}
-	public function in_transaction () {
-		return $this->inTransaction();
-	}
-
 	public function execute ($query, array $bind = NULL) {
 
 		$this->error = NULL;
@@ -50,7 +40,7 @@ class PDO extends \PDO {
 			list(,, $this->error) = $sth->errorInfo();
 	}
 
-	public function fetch_assoc ($query, array $bind = NULL) {
+	public function fetchAssoc ($query, array $bind = NULL) {
 
 		$this->error = NULL;
 
