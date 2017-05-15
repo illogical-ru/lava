@@ -180,10 +180,10 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 
 ```php
 $app  ->route('/:node1/#node2/*node3')
-      ->to   (function($app) {				// обработчик
-			echo $app->args->node1;		#  foo1.bar
-			echo $app->args->node2;		#  foo2
-			echo $app->args->node3;		#  foo3.bar/foo4.bar
+      ->to   (function($app) {			// обработчик
+		echo $app->args->node1;		#  foo1.bar
+		echo $app->args->node2;		#  foo2
+		echo $app->args->node3;		#  foo3.bar/foo4.bar
       });
 // поиск маршрута
 $app	->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
