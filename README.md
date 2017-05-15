@@ -7,9 +7,9 @@ Micro-Framework
 ## Конструктор
 
 
-### new Lava\App [(config)] : lava
+### new Lava\App ([config]) : lava
 
-```
+```php
 $app = new Lava\App (array(
     'charset' => 'utf-8',
     'home'    => '/path-to-home',
@@ -30,7 +30,7 @@ $app = new Lava\App (array(
 
 Конфиг
 
-```
+```php
 echo $app->conf->charset;	# utf-8
 ```
 
@@ -38,7 +38,7 @@ echo $app->conf->charset;	# utf-8
 
 Окружение
 
-```
+```php
 echo       $app->env->method;       # GET
 var_export($app->env->accept());    # array (0 => 'text/html', 1 => '*/*')
 ```
@@ -47,7 +47,7 @@ var_export($app->env->accept());    # array (0 => 'text/html', 1 => '*/*')
 
 Переменные
 
-```
+```php
 // URL: http://example.com/sandbox/?foo=3&bar=4&foo=5
 
 echo       $app->args->foo;       # 5
@@ -68,14 +68,14 @@ var_export($app->args->foo());    # array (0 => '3', 1 => '5')
 - M - месяц
 - Y - год
 
-```
+```php
 // установка
 $app->cookie->foo = 'bar';
 $app->cookie->bar = array(1, 2, 3);
 
 // чтение
-echo       $app->cookie->foo;       # bar
-var_export($app->cookie->bar());    # array (0 => '1', 1 => '2', 2 => '3')
+echo       $app->cookie->foo;		# bar
+var_export($app->cookie->bar());	# array (0 => '1', 1 => '2', 2 => '3')
 
 // дополнительные параметры
 $app->cookie->foo('bar', '1M');		// expire = 1 месяц
@@ -87,7 +87,7 @@ $app->cookie->foo('bar', '1M');		// expire = 1 месяц
 
 Как свойство отдает последнее значение, как метод, список всех значений
 
-```
+```php
 $app->stash->foo = 123;
 $app->stash->bar(4, 5);
 
@@ -104,7 +104,7 @@ var_export($app->stash->bar()); # array (0 => 4, 1 => 5)
 
 Если scheme равно TRUE, то текущая
 
-```
+```php
 echo $app->host(),      # host
 echo $app->host(TRUE),	# http://host
 echo $app->host('ftp'), # ftp://host
@@ -116,7 +116,7 @@ echo $app->host('ftp'), # ftp://host
 
 Если не установлена в конфиге, то текущую
 
-```
+```php
 echo $app->home(),              # /path-to-home
 echo $app->home('foo', 'bar'),	# /path-to-home/foo/bar
 ```
@@ -127,7 +127,7 @@ echo $app->home('foo', 'bar'),	# /path-to-home/foo/bar
 
 Если не установлена в конфиге, то текущую
 
-```
+```php
 echo $app->pub(),             # /pub-uri
 echo $app->pub('foo', 'bar'), # /pub-uri/foo/bar
 ```
@@ -140,7 +140,7 @@ echo $app->pub('foo', 'bar'), # /pub-uri/foo/bar
 
 Флаг append добавляет текущую query_string
 
-```
+```php
 // URL: http://example.com/sandbox/?zzz=456
 
 echo $app->uri(),                           # /sandbox/
@@ -152,7 +152,7 @@ echo $app->uri('/foo', 'bar=123', TRUE),    # /foo?zzz=456&bar=123
 
 Возвращает URL
 
-```
+```php
 // URL: http://example.com/sandbox/?zzz=456
 
 echo $app->url(),                           # http://example.com/sandbox/
@@ -178,12 +178,12 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 
 Если правило начинается не со слеша, то оно будет дополнено публичной папкой `lava->pub()`
 
-```
+```php
 $app  ->route('/:node1/#node2/*node3')
       ->to   (function($app) {				// обработчик
-			echo $app->args->node1;			#  foo1.bar
-			echo $app->args->node2;			#  foo2
-			echo $app->args->node3;			#  foo3.bar/foo4.bar
+			echo $app->args->node1;		#  foo1.bar
+			echo $app->args->node2;		#  foo2
+			echo $app->args->node3;		#  foo3.bar/foo4.bar
       });
 // поиск маршрута
 $app	->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
@@ -191,7 +191,7 @@ $app	->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
 // ограничение по окружению
 $app->route('/foo', array(
 	'user_addr'  => '127.0.0.1',			// если пользователь локальный
-	'method'     => array('GET', 'HEAD'),	// если метод GET или HEAD
+	'method'     => array('GET', 'HEAD'),		// если метод GET или HEAD
 	'user_agent' => '/^Mozilla/',			// если браузер Mozilla
 ));
 
@@ -203,7 +203,7 @@ $app->route('/foo', 'DELETE');
 
 Ограничить маршрут методом GET
 
-```
+```php
 $app->route_get ('/foo');
 // аналог
 $app->route     ('/foo', 'GET');
@@ -211,7 +211,7 @@ $app->route     ('/foo', 'GET');
 
 ### lava->route_post([rule]) : route
 
-```
+```php
 $app->route_post('/foo');
 ```
 
@@ -223,7 +223,7 @@ $app->route_post('/foo');
 
 Возвращает количество выполненых обработчиков
 
-```
+```php
 $app->route_match();		// будет использовано $app->env->uri
 $app->route_match('/foo/bar');
 $app->route_match('/foo', array('method' => 'POST');
@@ -233,22 +233,22 @@ $app->route_match('/foo', array('method' => 'POST');
 
 Добавить к маршруту ограничение по окружению
 
-```
+```php
 $app	->route('/foo')
-		->cond (array('user_addr' => '/^192\.168\./'));
+	->cond (array('user_addr' => '/^192\.168\./'));
 ```
 
 ### route->name(name) : route
 
 Служит для преобразования маршрута в путь
 
-```
+```php
 $app	->route('/foo/#id')
-		->name ('bar')
-		->to   (function($app) {
-			$id = $app->args->id;							// 123
-			echo $app->uri('bar', array('id' => $id + 1));	#  /foo/124
-		});
+	->name ('bar')
+	->to   (function($app) {
+		$id = $app->args->id;				//      123
+		echo $app->uri('bar', array('id' => $id + 1));	#  /foo/124
+	});
 
 $app	->route_match('/foo/123');
 ```
@@ -257,7 +257,7 @@ $app	->route_match('/foo/123');
 
 Обработчик маршрута
 
-```
+```php
 // функция
 $app->route('/foo')->to(function() {echo 'hello';});
 
@@ -279,12 +279,14 @@ $app->route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
 
 Выполняет обработчик с ключом `lava->type()`, если не существует, то с индексом `0`
 
-```
+```php
 $app->route('/page')->to(function($app) {
 	$app->render(array(
 		'html' => 'HTML CONTENT',
 		'json' => array('bar' => 123),
-		function ($app) {echo 'OTHER TYPE: ' . $app->type();},
+		function ($app) {
+			echo 'OTHER TYPE: ' . $app->type();
+		},
 	));
 });
 
@@ -297,7 +299,7 @@ $app->route_match('/page.xml');		# OTHER TYPE: xml
 
 Добавляет в заголовок `Location`
 
-```
+```php
 $app->redirect('/foo');
 ```
 
@@ -311,7 +313,7 @@ $app->redirect('/foo');
 
 Указать алгоритм хеширования можно в конфиге, по умолчанию `md5`
 
-```
+```php
 echo $app->safe->uuid();	# 055fb982653fef1ae76bde78b10f7221
 
 $foo = new Lava\App (array('safe' => array('algo' => 'sha256')));
@@ -325,12 +327,12 @@ echo $foo->safe->uuid();	# 49f2fbf757264416475e27e0ed7c56e89c69abc9efdd639ec6d6d
 
 Указать подпись можно в конфиге, по умолчанию пустая строка
 
-```
+```php
 $foo = new Lava\App (array('safe' => array('sign' => 'random_string')));
 
 list($signed, $uuid) = $foo->safe->uuid_signed();
 
-echo $signed;	# 31bd185d9b3929eb56ae6e4712b73962dcd6b2b55b5287117b9d65380f4146e3
+echo $signed;		# 31bd185d9b3929eb56ae6e4712b73962dcd6b2b55b5287117b9d65380f4146e3
 echo $uuid;		# 31bd185d9b3929eb56ae6e4712b73962
 ```
 
@@ -338,7 +340,7 @@ echo $uuid;		# 31bd185d9b3929eb56ae6e4712b73962
 
 Проверяет подписанный UUID
 
-```
+```php
 echo $app->safe->check($signed);	# 31bd185d9b3929eb56ae6e4712b73962
 ```
 
@@ -348,7 +350,7 @@ echo $app->safe->check($signed);	# 31bd185d9b3929eb56ae6e4712b73962
 
 Изменить список доступных символов можно в конфиге, по умолчанию `0123456789abcdef`
 
-```
+```php
 echo $app->safe->salt(16);	# f8da4f571ec3de9d
 
 $foo = new Lava\App (array('safe' => array('salt' => '01')));
