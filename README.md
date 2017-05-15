@@ -7,17 +7,18 @@ Micro-Framework
 ## Конструктор
 
 
-### new Lava\App ([config]) : lava
+### new Lava\App ([conf]) : lava
 
 ```php
 $app = new Lava\App (array(
-    'charset' => 'utf-8',
-    'home'    => '/path-to-home',
-    'pub'     => '/pub-uri',
+    'charset' => 'utf-8',		// кодировка для HTTP заголовков
+    'type'    => 'html',		// тип по умолчанию
+    'home'    => '/path-to-home',	// домашняя папка
+    'pub'     => '/pub-uri',		// публичная папка
     'safe'    => array(
-		'sign' => '',
-		'algo' => 'md5',
-		'salt' => '0123456789abcdef',
+	'sign' => '',			// подпись
+	'algo' => 'md5',		// алгоритм хеширования
+	'salt' => '0123456789abcdef',	// набор символов для соли
     ),
 ));
 ```
@@ -46,6 +47,8 @@ var_export($app->env->accept());    # array (0 => 'text/html', 1 => '*/*')
 ### lava->args : context
 
 Переменные
+
+Приоритет значений: пользовательские, POST, GET
 
 ```php
 // URL: http://example.com/sandbox/?foo=3&bar=4&foo=5
@@ -77,7 +80,7 @@ $app->cookie->bar = array(1, 2, 3);
 echo       $app->cookie->foo;		# bar
 var_export($app->cookie->bar());	# array (0 => '1', 1 => '2', 2 => '3')
 
-// дополнительные параметры
+// дополнительные параметры: expire, path, domain, secure
 $app->cookie->foo('bar', '1M');		// expire = 1 месяц
 ```
 
@@ -172,7 +175,7 @@ echo $app->url('/foo', 'bar=123', TRUE),    # http://example.com/foo?zzz=456&bar
 
 Плейсхолдер `*name` соответствует оставшейся части `(.+)`
 
-Получить значение плейсхолдера `lava->args->name`
+Получение значения плейсхолдера `lava->args->name`
 
 В дополнительных условиях `cond` можно добавить ограничение по переменным окружения `lava->env`
 
@@ -190,9 +193,9 @@ $app	->route_match('/foo1.bar/foo2.bar/foo3.bar/foo4.bar');
 
 // ограничение по окружению
 $app->route('/foo', array(
-	'user_addr'  => '127.0.0.1',			// если пользователь локальный
-	'method'     => array('GET', 'HEAD'),		// если метод GET или HEAD
-	'user_agent' => '/^Mozilla/',			// если браузер Mozilla
+	'method'     => array('GET', 'HEAD'),	// если метод GET или HEAD
+	'user_addr'  => '127.0.0.1',		// и пользователь локальный
+	'user_agent' => '/^Mozilla/',		// и браузер Mozilla
 ));
 
 // ограничение только по методу
@@ -219,6 +222,14 @@ $app->route_post('/foo');
 
 Выполняет обработчики совпавших маршрутов
 
+Если `uri` не указано, то будет использовано `lava->env->uri`
+
+Если `env` не указано, то будет использовано `lava->env`
+
+Если обработчик ничего не возвращает, то прекращается поиск маршрутов
+
+Если обработчик возвращает `FALSE`, то прекращается поиск маршрутов, обработчик не считается как выполненый
+
 Если обработчик возвращает `TRUE`, то продолжается проверка остальных в цепочке маршрутов
 
 Возвращает количество выполненых обработчиков
@@ -231,7 +242,7 @@ $app->route_match('/foo', array('method' => 'POST');
 
 ### route->cond(cond) : route
 
-Добавить к маршруту ограничение по окружению
+Добавить к маршруту ограничение по окружению `lava->env`
 
 ```php
 $app	->route('/foo')
@@ -257,6 +268,8 @@ $app	->route_match('/foo/123');
 
 Обработчик маршрута
 
+Обработчик получает в качестве аргумента `lava`
+
 ```php
 // функция
 $app->route('/foo')->to(function() {echo 'hello';});
@@ -277,7 +290,11 @@ $app->route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
 
 ### lava->render(handlers) : has_handler
 
-Выполняет обработчик с ключом `lava->type()`, если не существует, то с индексом `0`
+Выполняет обработчик с типом `lava->type()`, если не существует, то с индексом `0`
+
+Если нет типа запрашиваемых данных, то используется `lava->conf->type`
+
+Если тип `json` и есть значение `lava->args->callback`, возвращает `JSONP`
 
 ```php
 $app->route('/page')->to(function($app) {
@@ -293,6 +310,9 @@ $app->route('/page')->to(function($app) {
 $app->route_match('/page.html');	# HTML CONTENT
 $app->route_match('/page.json');	# {"bar":123}
 $app->route_match('/page.xml');		# OTHER TYPE: xml
+
+// если lava->conf->type == 'html'
+$app->route_match('/page');		# HTML CONTENT
 ```
 
 ### lava->redirect([url|uri|route [, data [, append]]]) : void
