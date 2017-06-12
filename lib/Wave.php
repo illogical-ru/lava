@@ -117,13 +117,13 @@ class SQLBuilder {
 
 	public function __call ($cmd, $args) {
 
-		$data = '';
+		$data = NULL;
 
 		if     (isset($args[0]))
 			$data = join(', ', (array)$args[0]);
 		if     (isset($args[1]) && $args[1])
 			$data = "(${data})";
-		elseif ($data)
+		elseif (isset($data))
 			$data = " ${data}";
 
 		$this->sql[]  = strtoupper($cmd) . $data;
@@ -519,21 +519,24 @@ class Model {
 			:  array();
 	}
 
-	public function column_list ($name) {
+	public function column_prop    ($name, $key) {
 
 		$columns = $this->columns();
 
-		return isset($columns[$name]['list'])
-			?    $columns[$name]['list']
-			:    array();
+		if     (isset ($columns[$name][$key]))
+			return $columns[$name][$key];
+	}
+	public function column_list    ($name) {
+		$list    = $this->column_prop($name, 'list');
+		return $list ? $list : array();
 	}
 	public function column_default ($name) {
 
-		$columns = $this->columns();
+		$default = $this->column_prop($name, 'default');
 		$method  = "${name}_default";
 
-		if     (isset ($columns[$name]['default']))
-			return $columns[$name]['default'];
+		if     (isset ($default))
+			return $default;
 		elseif (method_exists($this, $method))
 			return $this->$method();
 	}
@@ -799,7 +802,7 @@ class Model {
 		if (! $columns)	return;
 
 		foreach ($data as $i => $item)
-			foreach ($item as $key => $val) {
+			foreach ((array)$item as $key => $val) {
 
 				if     (!  isset($columns[$key])) {
 					if (is_string($key))
