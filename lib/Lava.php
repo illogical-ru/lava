@@ -274,15 +274,14 @@ class App {
 
 class Stash {
 
-	protected $data = array();
+	private $data = array();
 
 	public function __construct () {
 
 		$args = func_num_args() == 1		? func_get_arg (0)
 							: func_get_args( );
-
 		foreach ((array)$args as $key => $val)
-			$this->__set($key, $val);
+			self::__set($key, $val);
 	}
 
 	public function __get ($key) {
@@ -302,7 +301,7 @@ class Stash {
 		$data = &$this->data;
 
 		if     ($args)
-			return $this->__set($key, $args);
+			return self::__set($key, $args);
 		elseif (isset        ($data[$key]))
 			return (array)$data[$key];
 		else
@@ -314,6 +313,10 @@ class Stash {
 	}
 	public function __unset ($key) {
 		       unset($this->data[$key]);
+	}
+
+	public function _has_key ($key) {
+		return key_exists($key, $this->data);
 	}
 
 	public function _data () {
@@ -403,24 +406,24 @@ class ENV extends Stash {
 	}
 }
 
-class Args extends Stash {
+class Args {
+
+	private $data = array();
 
 	public function __construct () {
 
 		$data = array('get' => $_GET, 'post' => $_POST, array());
 
 		foreach ($data as $method => $args) {
-			foreach ($args as &$val) {
+			foreach ($args as &$val)
 				$val = $this->_normalize ($val);
-			}
 			$this->data[$method] = new Stash ($args);
 		}
 	}
 
 	public function __get ($key) {
 		foreach (array_reverse($this->data) as $stash)
-			if (key_exists($key, $stash->_data()))
-				return $stash->$key;
+			if ($stash->_has_key($key)) return $stash->$key;
 	}
 	public function __set  ($key, $val) {
 		return end($this->data)->$key = $val;
@@ -431,8 +434,7 @@ class Args extends Stash {
 		if ($args) return $this->__set($key, $args);
 
 		foreach (array_reverse($this->data) as $stash)
-			if (key_exists($key, $stash->_data()))
-				return $stash->$key();
+			if ($stash->_has_key($key)) return $stash->$key();
 
 		return  array();
 	}
@@ -487,8 +489,7 @@ class Args extends Stash {
 class Cookie extends Stash {
 
 	public function __construct () {
-		foreach ($_COOKIE as $key  => $val)
-			$this->data [$key] =  $val;
+		parent::__construct($_COOKIE);
 	}
 
 	public function __set ($key, $val) {
@@ -510,15 +511,28 @@ class Cookie extends Stash {
 	}
 
 	public function __call ($key, $args) {
-		if     ($args)
+		if   ($args)
 			return call_user_func_array(
 				array      ($this, '__set'),
 				array_merge(array($key), $args)
 			);
-		elseif (isset        ($this->data[$key]))
-			return (array)$this->data[$key];
 		else
-			return  array();
+			return parent::__call($key, $args);
+	}
+
+	public function __unset ($key) {
+
+		$data = $this->_data();
+
+		if     (! isset   ($data[$key]))
+			return;
+		elseif (  is_array($data[$key])) {
+			array_walk_recursive(
+				$data[$key], function(&$item) {$item = NULL;}
+			);
+			$this->$key = $data[$key];
+		}
+		else	$this->$key = NULL;
 	}
 
 	private function _normalize ($key, $val) {
