@@ -32,9 +32,9 @@ class PDO extends \PDO {
 
 		$this->error = NULL;
 
-		$sth = $this->prepare($query);
+		$sth = $this->_prepare($query, $bind);
 
-		if   ($sth->execute($bind))
+		if   ($sth && $sth->execute())
 			return  $sth ->rowCount();
 		else
 			list(,, $this->error) = $sth->errorInfo();
@@ -44,14 +44,40 @@ class PDO extends \PDO {
 
 		$this->error = NULL;
 
-		$sth = $this->prepare($query);
+		$sth = $this->_prepare($query, $bind);
 
-		$sth->setFetchMode(PDO::FETCH_ASSOC);
-
-		if   ($sth->execute($bind))
+		if   (	   $sth
+			&& $sth->setFetchMode(PDO::FETCH_ASSOC)
+			&& $sth->execute     ()
+		)
 			return  $sth ->fetchAll();
 		else
 			list(,, $this->error) = $sth->errorInfo();
+	}
+
+
+	private function _prepare ($query, $bind = NULL) {
+
+		$sth = $this->prepare($query);
+
+		foreach ((array)$bind as $key => $val) {
+
+			$key = is_int($key) ? $key + 1 : ":${key}";
+
+			if     (  is_null($val))
+				$type = PDO::PARAM_NULL;
+			elseif (  is_bool($val))
+				$type = PDO::PARAM_BOOL;
+			elseif (  is_int ($val))
+				$type = PDO::PARAM_INT;
+			else
+				$type = PDO::PARAM_STR;
+
+			if     (! $sth->bindValue($key, $val, $type))
+				return;
+		}
+
+		return $sth;
 	}
 }
 
