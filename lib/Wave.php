@@ -855,14 +855,12 @@ class Model {
 							$error[$i][$key] = 'null';
 			}
 
-		$unique  = $this->unique();
+		$selects = array();
 
-		$index   = array();
-
-		foreach ($unique as $keys)
+		foreach ($this->unique() as $keys)
 			foreach ($data as $i => $item) {
 
-				$stack =  array();
+				$stack     = array();
 
 				foreach ((array)$keys as $key) {
 
@@ -871,52 +869,34 @@ class Model {
 					)
 						continue 2;
 
-					$stack[$key]         = $item[$key];
+					$stack[$key] = $item[$key];
 				}
-				foreach ($stack as $key => $val)
-					$index[$key]['in'][] = $val;
+
+				$cond      = array();
+
+				foreach ($stack  as   $key => $val) {
+					$i .= ":${key}";
+					$cond['-and'][$key] = $val;
+				}
+
+				if ($not) $cond['-not'] = $not;
+
+				$selects[] = $this	->_sql  ()
+							->select("'${i}' AS 'index'")
+							->from  ($this->table())
+							->where ($cond);
 			}
 
-		if (! $index)	return $error;
+		if ($selects) {
 
-		$cond    = array('-or' => $index);
+			$sql = $this->_sql()->union($selects);
 
-		if (  $not)	$cond['-not'] = $not;
+			$sth = $this->pdo->prepare((string)$sql);
+			$sth->execute($sql());
 
-		$result  = $this->select(
-			$cond, array('columns' => array_keys($index))
-		);
-		if (! $result)	return $error;
-
-		foreach ($unique as $keys) {
-
-			$keys  = (array)$keys;
-			$index =  array();
-
-			foreach ($result as       $item) {
-
-				$stack = array();
-
-				foreach ($keys as $key)
-					if   (key_exists($key, $item))
-						$stack[$key] = $item[$key];
-					else
-						continue 2;
-
-				$index[serialize($stack)] = TRUE;
-			}
-			foreach ($data   as $i => $item) {
-
-				$stack = array();
-
-				foreach ($keys as $key)
-					if   (key_exists($key, $item))
-						$stack[$key] = $item[$key];
-					else
-						continue 2;
-
-				if (isset($index[serialize($stack)]))
-					$error[$i][join(':', $keys)] = 'exists';
+			foreach ($sth->fetchAll(PDO::FETCH_COLUMN) as $index) {
+				list  ($i, $key) = explode(':', $index, 2);
+				$error[$i][$key] = 'exists';
 			}
 		}
 
