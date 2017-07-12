@@ -10,6 +10,13 @@ Micro-Framework
 ### new Lava\App ([conf]) : lava
 
 ```php
+require_once 'lib/Lava/Autoloader.php';
+
+use Lava\Autoloader;
+
+$al  = new Autoloader;
+$al->register();
+
 $app = new Lava\App (array(
     'charset' => 'utf-8',		// кодировка для HTTP заголовков
     'type'    => 'html',		// тип по умолчанию
@@ -268,11 +275,16 @@ $app	->route_match('/foo/123');
 
 Обработчик маршрута
 
+Если не указан метод, будет использовано имя маршрута, если его нет, то `start`
+
 Обработчик получает в качестве аргумента `lava`
 
 ```php
 // функция
 $app->route('/foo')->to(function() {echo 'hello';});
+
+// класс|неймспейс, метод
+$app->route('/foo')->to('Controller\Foo', 'bar');
 
 // файл, метод
 $app->route('/foo')->to('controller/Foo.php', 'bar');
@@ -376,4 +388,39 @@ echo $app->safe->salt(16);	# f8da4f571ec3de9d
 $foo = new Lava\App (array('safe' => array('salt' => '01')));
 
 echo $foo->safe->salt(16);	# 1001001110111100
+```
+
+
+## Валидация
+
+### lava->is_valid(val, tests) : bool_result
+
+Тесты:
+
+- tinyint[:unsigned]
+- smallint[:unsigned]
+- mediumint[:unsigned]
+- integer[:unsigned]
+- bigint[:unsigned]
+- numeric[:precision[:scale]]
+- boolean
+- string[:min_size[:max_size]]
+- char[:size]
+- email
+- url
+- ipv4
+- date
+- time
+- datetime
+- less_than[:num]
+- greater_than[:num]
+
+- bool
+- array
+- regexp
+- function
+
+```php
+// строка от 1 до 20 символов и соответствует Email
+echo $app->is_valid('me@example.com', array('string:1:20', 'email'));	# TRUE
 ```
