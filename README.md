@@ -3,6 +3,8 @@ lava-php
 
 Micro-Framework
 
+Требования: PHP 5.3+, 7+
+
 
 ## Конструктор
 
@@ -423,4 +425,62 @@ echo $foo->safe->salt(16);	# 1001001110111100
 ```php
 // строка от 1 до 20 символов и соответствует Email
 echo $app->is_valid('me@example.com', array('string:1:20', 'email'));	# TRUE
+```
+
+
+## Генератор SQL запросов
+
+### lava->sql_builder() : Lava\SQLBuilder
+
+Возвращает новый экземпляр класса `Lava\SQLBuilder`
+
+#### Lava\SQLBuilder->select([expression [, options]])
+
+```php
+$sql = $app	->sql_builder()
+		->select()
+		->from('foo')
+		->where(array('field' => 'abc'));
+
+echo (string)$sql;	# SELECT * FROM `foo` WHERE `field` = ?
+var_export($sql());	# array (0 => 'abc')
+```
+
+#### Lava\SQLBuilder->insert([options]])
+
+```php
+$sql = $app	->sql_builder()
+		->insert()
+		->into('foo')
+		->values(array('f1' => 'abc', 'f2' => '123'));
+
+echo (string)$sql;	# INSERT INTO `foo` (`f1`, `f2`) VALUES (?, ?)
+var_export($sql());	# array(0 => 'abc', 1 => '123')
+```
+
+#### Lava\SQLBuilder->update(table [, options]])
+
+```php
+$sql = $app	->sql_builder()
+		->update('foo')
+		->set(array('f1' => 'abc', 'f2' => '123'))
+		->where(array('f2' => array('>' => 100)));
+
+echo (string)$sql;	# UPDATE `foo` SET `f1` = ?, `f2` = ? WHERE `f2` > ?
+var_export($sql());	# array(0 => 'abc', 1 => '123', 2 => 100)
+```
+
+#### Lava\SQLBuilder->delete([options]])
+
+```php
+$sql = $app	->sql_builder()
+		->delete()
+		->from('foo')
+		->where(array('-or' => array(
+			'f1' => array('like' => 'a%'),
+			'f2' => array('in'   => array(123, 456)),
+		)));
+
+echo (string)$sql;	# DELETE FROM `foo` WHERE (`f1` LIKE ? OR `f2` IN (?, ?))
+var_export($sql());	# array (0 => 'a%', 1 => 123, 2 => 456)
 ```
