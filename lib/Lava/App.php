@@ -16,6 +16,7 @@ use Lava\Cookie;
 use Lava\Session;
 use Lava\Safe;
 use Lava\Route;
+use Lava\Validator;
 
 
 class App {
@@ -287,6 +288,11 @@ class App {
 		}
 
 		return  $done;
+	}
+
+	public function is_valid ($val, $tests) {
+		$queue = new Validator ($tests);
+		return $queue->test($val);
 	}
 }
 
