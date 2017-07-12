@@ -20,6 +20,13 @@ class Validator {
 	}
 
 
+	public function __call ($key,  $args) {
+		array_unshift  ($args, $key);
+		$this->add(join(':',   $args));
+		return $this;
+	}
+
+
 	public function add ($tests) {
 
 		foreach ((array)$tests as $test)
@@ -65,13 +72,6 @@ class Validator {
 			if (! call_user_func_array($test, $args)) return FALSE;
 
 		return  TRUE;
-	}
-
-
-	public function __call ($key,  $args) {
-		array_unshift  ($args, $key);
-		$this->add(join(':',   $args));
-		return $this;
 	}
 
 	// --- tests -------------------------------------------------------- //
