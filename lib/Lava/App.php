@@ -236,7 +236,7 @@ class App {
 
 		for ($i = count($this->routes); $i--;) {
 
-			$route = array_shift($this->routes);
+			$route  = array_shift($this->routes);
 
 			if   ($route->name())
 				$this->routes[$route->name()] = $route;
@@ -248,15 +248,12 @@ class App {
 
 		foreach ($this->routes as $route) {
 
-			$args   = $route->test($uri, $this->env->_data());
-			if   (is_null($args))	continue;
-
-			foreach ($args as $key => $val)
-				$this->args->$key = $val;
-
 			$to     = $route->to();
+			$args   = $route->test($uri, $this->env->_data());
 
-			if   (count($to) == 1 && is_callable($to[0]))
+			if   (! $to || is_null($args)) continue;
+
+			if   (  count($to) == 1 && is_callable($to[0]))
 				$to      = array_shift($to);
 			else {
 				$target  = array_shift($to);
@@ -282,10 +279,13 @@ class App {
 				$to      = array(new $class ($this), $method);
 			}
 
+			foreach ($args as $key => $val)
+				$this->args->$key = $val;
+
 			$result = call_user_func($to, $this);
 
-			if   ($result !== FALSE)	$done++;
-			if   ($result !== TRUE)		break;
+			if   (  $result !== FALSE)	$done++;
+			if   (  $result !== TRUE)	break;
 		}
 
 		return  $done;
