@@ -2,7 +2,7 @@
 	if (! isset($app)) exit;
 
 	$title   = $app->stash->title();
-	$title[] = 'App';
+	$title[] = $app->dict()->tr('Lab');
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $app->lang(TRUE) ?>">

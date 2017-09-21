@@ -14,9 +14,7 @@ Micro-Framework
 ```php
 require_once 'lib/Lava/Autoloader.php';
 
-use Lava\Autoloader;
-
-$al  = new Autoloader;
+$al  = new Lava\Autoloader;
 $al->register();
 
 $app = new Lava\App (array(

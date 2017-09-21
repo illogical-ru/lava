@@ -5,7 +5,7 @@ namespace Controller;
 
 class Page {
 
-	public $app;
+	protected $app;
 
 
 	public function __construct ($app) {
@@ -23,17 +23,30 @@ class Page {
 	// язык
 	public function lang () {
 
-		$app  = $this->app;
-
-		$code = $app->args->code;
+		$app = $this->app;
 
 		// кладём в куки на год
-		$app->cookie->lang($code, '1Y', '/');
+		$app->cookie->lang($app->args->code, '1Y', '/');
 
 		$app->redirect(preg_replace(
 			array('/(\?|&)lang=[^&]*(?:&|$)/', '/\??&*$/'),
 			array('\\1',                       ''),
 			$app->uri_ref_or('')
+		));
+	}
+
+	// окружение
+	public function env () {
+
+		$app = $this->app;
+
+		$app->stash->env = $app->env->_data();
+
+		$app->render(array(
+			'html' => function($app) {
+				include 'templates/env.php';
+			},
+			'json' => $app->stash->env(),
 		));
 	}
 }

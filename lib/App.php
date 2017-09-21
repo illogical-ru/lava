@@ -8,9 +8,8 @@ class App extends Lava\App {
 	private $dict;
 
 
-	// --- инициализация ------------------------------------------------ //
-
-	public function init () {
+	// старт
+	public function start () {
 
 		$conf   = $this->conf;
 

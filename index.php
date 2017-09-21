@@ -2,7 +2,7 @@
 
 error_reporting(E_ALL);
 
-// --- autoloader ----------------------------------------------------------- //
+// --- автолоадер ----------------------------------------------------------- //
 
 require_once 'lib/Lava/Autoloader.php';
 
@@ -14,7 +14,7 @@ $al->registerPrefixes(array(
 $al->extensions      ('php');
 $al->register        ();
 
-// --- app ------------------------------------------------------------------ //
+// --- приложение ----------------------------------------------------------- //
 
 $app = new App (array(
 
@@ -26,7 +26,7 @@ $app = new App (array(
 		'en-US' => 'English',
 	),
 
-	'timezone' => 'Europe/Moscow',
+	'timezone' => 'UTC',
 ));
 
 
@@ -37,7 +37,7 @@ if (function_exists('mb_internal_encoding'))
 // зона
 date_default_timezone_set   ($app->conf->timezone);
 
-// --- controllers ---------------------------------------------------------- //
+// --- контроллёры ---------------------------------------------------------- //
 
 // главная страница
 $app	->route	()
@@ -48,6 +48,11 @@ $app	->route	()
 $app	->route	('lang/:code')
 	->name	('lang')
 	->to	('Controller\Page', 'lang');
+
+// окружение
+$app	->route	('env')
+	->name	('env')
+	->to	('Controller\Page', 'env');
 
 // --- 404 ------------------------------------------------------------------ //
 

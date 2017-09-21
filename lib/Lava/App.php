@@ -50,7 +50,7 @@ class App {
 		$this->session = new Session;
 		$this->safe    = new Safe  ($this->conf->safe());
 
-		if (method_exists($this, 'init')) $this->init();
+		if (method_exists($this, 'start')) $this->start();
 	}
 
 
@@ -64,7 +64,7 @@ class App {
 			$host   = join('.', array_merge(
 				(array)$subdomain, array($host)
 			));
-		if (isset($scheme))
+		if ($scheme)
 			$host   = "${scheme}://${host}";
 
 		return  $host;
