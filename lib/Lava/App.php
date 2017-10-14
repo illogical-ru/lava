@@ -56,15 +56,18 @@ class App {
 
 	public function host ($scheme = NULL, $subdomain = NULL) {
 
-		$host = $this->conf->host	? $this->conf->host
-						: $this->env ->host;
-		if ($scheme === TRUE)
+		if   ($this->conf->host && $subdomain !== TRUE)
+			$host   = $this->conf->host;
+		else
+			$host   = $this->env ->host;
+
+		if   ($scheme === TRUE)
 			$scheme = $this->env->is_https ? 'https' : 'http';
-		if ($subdomain)
+		if   ($subdomain        && $subdomain !== TRUE)
 			$host   = join('.', array_merge(
 				(array)$subdomain, array($host)
 			));
-		if ($scheme)
+		if   ($scheme)
 			$host   = "${scheme}://${host}";
 
 		return  $host;
@@ -82,7 +85,7 @@ class App {
 
 		$pub  = $this->conf->pub	? $this->conf->pub
 						: preg_replace(
-							'/\/[^\/]*$/', '',
+							'|/[^/]*$|', '',
 							$this->env->script
 						  );
 
@@ -101,36 +104,44 @@ class App {
 					.   $data;
 		}
 
-		if     (! preg_match('/^(?:[a-zA-Z]+:\/)?\//', $uri))
+		if     (! preg_match('|^(?:[a-z]+:/)?/|i', $uri))
 			$uri  = $this->pub($uri);
 
 		return  $uri;
 	}
-	public function uri_ref_or () {
 
-		if   (	     preg_match(
-				'/^([a-z]+:\/\/[^\/]+)(([^?]*).*)/',
-				$this->env->referer,
-				$match
-			     )
-			&& ! strcasecmp($match[1],   $this->host(TRUE))
-			&&              $match[3] != $this->env->uri
-		)
-			return  $match[2];
-		else
-			return  call_user_func_array(
-				array($this, 'uri'), func_get_args()
-			);
-	}
 	public function url  () {
 
-		$url  = call_user_func_array(
-			array($this, 'uri'), func_get_args()
+		$args      = func_get_args();
+
+		$subdomain = key_exists(3, $args) ? $args[3] : TRUE;
+
+		$url       = call_user_func_array(
+			array($this, 'uri'), $args
 		);
-		if (! preg_match('/^[a-zA-Z]+:\/\//', $url))
-			$url = $this->host(TRUE) . $url;
+		if (! preg_match('|^[a-z]+://|i', $url))
+			$url = $this->host(TRUE, $subdomain) . $url;
 
 		return  $url;
+	}
+	public function url_ref_or () {
+
+		$env = $this->env;
+
+		if   (     preg_match(
+				'|^[a-z]+://([^/]+)([^?]*)|i',
+				$env->referer,
+				$match
+			   )
+			&& (	   strcasecmp($env->host,  $match[1])
+				||            $env->uri != $match[2]
+			   )
+		)
+			return  $env->referer;
+		else
+			return  call_user_func_array(
+				array($this, 'url'), func_get_args()
+			);
 	}
 
 	public function type () {
