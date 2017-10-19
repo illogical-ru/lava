@@ -211,7 +211,7 @@ class App {
 	public function redirect () {
 
 		$location = call_user_func_array(
-			array($this, 'uri'), func_get_args()
+			array($this, 'url'), func_get_args()
 		);
 
 		return $this->render(array(
