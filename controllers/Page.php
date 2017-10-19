@@ -31,7 +31,7 @@ class Page {
 		$app->redirect(preg_replace(
 			array('/(\?|&)lang=[^&]*(?:&|$)/', '/\??&*$/'),
 			array('\\1',                       ''),
-			$app->uri_ref_or('')
+			$app->url_ref_or('')
 		));
 	}
 
