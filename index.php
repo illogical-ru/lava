@@ -57,9 +57,16 @@ $app	->route	('env')
 // ссылки
 $app	->route	('link')
 	->name	('link')
-	->to	(function($app) {
-		include 'templates/link.php';
-	});
+	->to	('Controller\Common', 'link');
+
+// рендер
+$app	->route	('render')
+	->name	('render')
+	->to	('Controller\Common', 'render');
+// рендер - фрэйм
+$app	->route	('render/item')
+	->name	('render-item')
+	->to	('Controller\Common', 'render_iframe');
 
 // --- 404 ------------------------------------------------------------------ //
 

@@ -28,9 +28,15 @@ footer {
 
 pre {
 	border-radius: 0;
-	color: #555;
+	color: #888;
 	border: 0;
 	border-left: 3px solid #ddd;
+}
+
+iframe {
+	margin: 10px 0;
+	width: 100%;
+	border: 1px dashed #ccc;
 }
 
 #content {
@@ -39,8 +45,8 @@ pre {
 	background-color: #f4f4f4;
 }
 
-#back {
-	margin-bottom: 20px;
+#control {
+	margin-bottom: 30px;
 }
 
 .well {

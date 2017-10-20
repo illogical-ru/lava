@@ -1,0 +1,51 @@
+<?php
+	if (! isset($app)) exit;
+
+	$app->stash->title = $app->dict()->tr('Render');
+
+	include 'templates/_header.php';
+?>
+<div id="render" class="container">
+	<div id="control">
+		<a href="<?php echo $app->uri('index') ?>">
+			<i class="fa fa-chevron-left" aria-hidden="true"></i>
+			<?php echo $app->dict()->tr('To Home Page') ?>
+		</a>
+	</div>
+	<div class="well">
+		<h4 class="title ellipsis nowrap">lava->render(handlers) : has_handler</h4>
+		<div class="essense">
+			<div class="row">
+				<div class="col-sm-6">
+<pre>
+$app->render(array(
+	'html' => 'HTML Content',
+	'txt'  => function() {
+		return 'Plain text';
+	},
+	'json' => array('foo' => 123),
+	// default
+	function($app) {
+		return 'Type: ' . $app->type();
+	},
+));
+</pre>
+				</div>
+				<div class="col-sm-6">
+					<?php
+						foreach (array('', 'html', 'txt', 'json', 'json?callback=bar', 'js') as $type):
+							$url = $app->url('render-item') . ($type ? ".${type}" : '');
+					?>
+							<div class="ellipsis"><a href="<?php echo $url ?>" target="_blank"><?php echo $url ?></a></div>
+							<iframe src="<?php echo $url ?>" height="35"></iframe>
+					<?php
+						endforeach;
+					?>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<?php
+	include 'templates/_footer.php';
+?>

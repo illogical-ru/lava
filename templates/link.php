@@ -6,10 +6,10 @@
 	include 'templates/_header.php';
 ?>
 <div id="link" class="container">
-	<div id="back">
+	<div id="control">
 		<a href="<?php echo $app->uri('index') ?>">
 			<i class="fa fa-chevron-left" aria-hidden="true"></i>
-			<?php echo $app->dict()->tr('Return to Home Page') ?>
+			<?php echo $app->dict()->tr('To Home Page') ?>
 		</a>
 	</div>
 	<div class="row">
