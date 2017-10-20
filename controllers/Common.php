@@ -3,7 +3,7 @@
 namespace Controller;
 
 
-class Page {
+class Common {
 
 	protected $app;
 

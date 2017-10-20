@@ -61,8 +61,8 @@ class Env extends Stash {
 				$accept[$match[1]] = isset($match[2]) ? $match[2] : 1;
 			}
 
-			              arsort    ($accept);
-			$data[$key] = array_keys($accept);
+			              arsort                  ($accept);
+			$data[$key] = array_reverse(array_keys($accept));
 		}
 
 		foreach (self::$aliases as $key => $val) {

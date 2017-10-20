@@ -21,12 +21,38 @@ body {
 	background-color: white;
 }
 
+footer {
+	padding: 10px 0;
+	border-top: 1px solid #eee;
+}
+
+pre {
+	border-radius: 0;
+	color: #555;
+	border: 0;
+	border-left: 3px solid #ddd;
+}
+
 #content {
+	padding-top: 30px;
 	padding-bottom: 16px;
 	background-color: #f4f4f4;
 }
 
-footer {
-	padding: 10px 0;
-	border-top: 1px solid #eee;
+#back {
+	margin-bottom: 20px;
+}
+
+.well {
+	background-color: white;
+	border-radius: 0;
+}
+.well .title {
+	margin-top: 0;
+	margin-bottom: 10px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid #eee;
+}
+.well .essense {
+	margin-bottom: -10px;
 }

@@ -101,13 +101,17 @@ class Route {
 		return  $args;
 	}
 
-	public function uri ($args = array()) {
+	public function uri (&$args = NULL) {
 
 		$uri = array();
 
-		foreach ($this->segs as $i => $seg)
+		foreach ($this->segs as $i => $seg) {
+
 			$uri[] = $i & 1 && isset($args[$seg])	? $args[$seg]
 								:       $seg;
+			unset($args[$seg]);
+		}
+
 		return  join('', $uri);
 	}
 }

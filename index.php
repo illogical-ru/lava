@@ -42,17 +42,24 @@ date_default_timezone_set   ($app->conf->timezone);
 // главная страница
 $app	->route	()
 	->name	('index')
-	->to	('Controller\Page', 'index');
+	->to	('Controller\Common', 'index');
 
 // язык
 $app	->route	('lang/:code')
 	->name	('lang')
-	->to	('Controller\Page', 'lang');
+	->to	('Controller\Common', 'lang');
 
 // окружение
 $app	->route	('env')
 	->name	('env')
-	->to	('Controller\Page', 'env');
+	->to	('Controller\Common', 'env');
+
+// ссылки
+$app	->route	('link')
+	->name	('link')
+	->to	(function($app) {
+		include 'templates/link.php';
+	});
 
 // --- 404 ------------------------------------------------------------------ //
 

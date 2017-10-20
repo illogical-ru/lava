@@ -96,9 +96,10 @@ class App {
 
 		if     (! isset($uri))
 			$uri  = $this->env->uri;
-		if     (  isset($this->routes[$uri]))
+		elseif (  isset($this->routes[$uri])) {
 			$uri  = $this->routes[$uri]->uri($data);
-		elseif (  isset($data) || $append) {
+		}
+		if     (  $data || $append) {
 			$data = $this->args->_query($data, $append);
 			if ($data) $uri	.= (strpos($uri, '?') ? '&' : '?')
 					.   $data;

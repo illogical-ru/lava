@@ -19,7 +19,7 @@ class App extends Lava\App {
 		$accept = array_merge(
 			$this->args->_get()->lang(),
 			$this->cookie      ->lang(),
-			$this->env         ->accept_language(),
+			array_reverse($this->env->accept_language()),
 			array_keys         ($langs)
 		);
 
