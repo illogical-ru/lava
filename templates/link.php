@@ -15,7 +15,7 @@
 	<div class="row">
 		<div class="col-sm-6">
 			<div class="well">
-				<h4 class="title">lava->uri([path|route [, data [, append]]]) : uri</h4>
+				<h4 class="title ellipsis nowrap">lava->uri([path|route [, data [, append]]]) : uri</h4>
 				<div class="essense">
 <pre>
 echo $app->uri();
@@ -33,8 +33,8 @@ echo $app->uri('bar');
 </pre>
 
 <pre>
-echo $app->uri('bar', array('arg' => '1#2'));
-# <?php echo htmlspecialchars(var_export($app->uri('bar', array('arg' => '1#2')), TRUE)); ?>
+echo $app->uri('/bar', array('arg' => '1#2'));
+# <?php echo htmlspecialchars(var_export($app->uri('/bar', array('arg' => '1#2')), TRUE)); ?>
 </pre>
 
 <pre>
@@ -46,7 +46,7 @@ echo $app->uri('bar', 'arg=1#2', TRUE);
 		</div>
 		<div class="col-sm-6">
 			<div class="well">
-				<h4 class="title">lava->url([path|route [, data [, append [, subdomain]]]]) : url</h4>
+				<h4 class="title ellipsis nowrap">lava->url([path|route [, data [, append [, subdomain]]]]) : url</h4>
 				<div class="essense">
 <pre>
 echo $app->url();
@@ -64,8 +64,8 @@ echo $app->url('bar');
 </pre>
 
 <pre>
-echo $app->url('bar', array('arg' => '1#2'));
-# <?php echo htmlspecialchars(var_export($app->url('bar', array('arg' => '1#2')), TRUE)); ?>
+echo $app->url('/bar', array('arg' => '1#2'));
+# <?php echo htmlspecialchars(var_export($app->url('/bar', array('arg' => '1#2')), TRUE)); ?>
 </pre>
 
 <pre>
@@ -83,7 +83,7 @@ echo $app->url('bar', 'arg=1#2', TRUE, 'subdomain');
 		</div>
 	</div>
 	<div class="well">
-		<h4 class="title">lava->host([scheme [, subdomain]]) : host</h4>
+		<h4 class="title ellipsis nowrap">lava->host([scheme [, subdomain]]) : host</h4>
 		<div class="essense">
 <pre>
 echo $app->host();
@@ -107,7 +107,7 @@ echo $app->host('https', 'safe');
 		</div>
 	</div>
 	<div class="well">
-		<h4 class="title">lava->pub([node, ...]) : pub</h4>
+		<h4 class="title ellipsis nowrap">lava->pub([node, ...]) : pub</h4>
 		<div class="essense">
 <pre>
 echo $app->pub();
@@ -115,8 +115,8 @@ echo $app->pub();
 </pre>
 
 <pre>
-echo $app->pub('script.js');
-# <?php echo htmlspecialchars(var_export($app->pub('script.js'), TRUE)); ?>
+echo $app->pub('js/main.js');
+# <?php echo htmlspecialchars(var_export($app->pub('js/main.js'), TRUE)); ?>
 </pre>
 		</div>
 	</div>

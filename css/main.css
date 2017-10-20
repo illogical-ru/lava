@@ -46,6 +46,9 @@ pre {
 .well {
 	background-color: white;
 	border-radius: 0;
+	border: 1px solid #eee;
+	border-right: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
 }
 .well .title {
 	margin-top: 0;
@@ -55,4 +58,12 @@ pre {
 }
 .well .essense {
 	margin-bottom: -10px;
+}
+
+.ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.nowrap {
+	white-space: nowrap;
 }

@@ -7,7 +7,7 @@
 ?>
 <div id="not-found" class="container">
 	<div class="well">
-		<h3 class="title"><?php echo $app->stash->title ?></h3>
+		<h3 class="title ellipsis"><?php echo $app->stash->title ?></h3>
 		<div class="essense">
 			<p><a href="<?php echo $app->uri('index') ?>"><?php echo $app->dict()->tr('Return to Home Page') ?></a></p>
 		</div>

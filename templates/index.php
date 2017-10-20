@@ -5,7 +5,7 @@
 ?>
 <div id="index" class="container">
 	<div class="well">
-		<h3 class="title"><?php echo $app->dict()->tr('Hello, world') ?>!</h3>
+		<h3 class="title ellipsis"><?php echo $app->dict()->tr('Hello, world') ?>!</h3>
 		<div class="essense">
 			<ul class="list-unstyled">
 				<li>

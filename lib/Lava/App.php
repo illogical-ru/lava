@@ -96,17 +96,16 @@ class App {
 
 		if     (! isset($uri))
 			$uri  = $this->env->uri;
-		elseif (  isset($this->routes[$uri])) {
+		elseif (  isset($this->routes[$uri]))
 			$uri  = $this->routes[$uri]->uri($data);
-		}
+		elseif (! preg_match('|^(?:[a-z]+:/)?/|i', $uri))
+			$uri  = $this->env->uri  .  '/' .  $uri;
+
 		if     (  $data || $append) {
 			$data = $this->args->_query($data, $append);
 			if ($data) $uri	.= (strpos($uri, '?') ? '&' : '?')
 					.   $data;
 		}
-
-		if     (! preg_match('|^(?:[a-z]+:/)?/|i', $uri))
-			$uri  = $this->pub($uri);
 
 		return  $uri;
 	}

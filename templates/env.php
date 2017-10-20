@@ -18,7 +18,7 @@
 		<div class="row">
 			<div class="col-sm-6">
 				<div class="well">
-					<h3 class="title">lava->env-><?php echo $key ?></h3>
+					<h4 class="title ellipsis nowrap">lava->env-><?php echo $key ?></h4>
 					<div class="essense">
 <pre>
 echo $app->env-><?php echo $key ?>;
@@ -29,10 +29,10 @@ echo $app->env-><?php echo $key ?>;
 			</div>
 			<div class="col-sm-6">
 				<div class="well">
-					<h3 class="title">lava->env-><?php echo $key ?>()</h3>
+					<h4 class="title ellipsis nowrap">lava->env-><?php echo $key ?>()</h4>
 					<div class="essense">
 <pre>
-echo $app->env-><?php echo $key ?>();
+var_export($app->env-><?php echo $key ?>());
 <?php echo preg_replace('/^/m', '# ', htmlspecialchars(var_export($app->env->$key(), TRUE))); ?>
 </pre>
 					</div>
@@ -41,8 +41,8 @@ echo $app->env-><?php echo $key ?>();
 		</div>
 	<?php endif; ?>
 	<div class="well">
-		<h3 class="title">lava->env</h3>
-		<div class="essense">
+		<h4 class="title ellipsis nowrap">lava->env</h4>
+		<div class="essense table-responsive">
 			<table class="table table-striped table-condensed">
 				<?php foreach ($app->stash->env() as $key => $val): ?>
 					<tr>
@@ -50,7 +50,7 @@ echo $app->env-><?php echo $key ?>();
 							<a href="<?php echo $app->uri(NULL, array('key' => $key)) ?>"><?php echo htmlspecialchars($key) ?></a>
 						</th>
 						<td class="text-<?php echo is_string($val) ? 'muted' : 'info' ?>">
-							<?php echo nl2br(htmlspecialchars(is_string($val) ? $val : var_export($val, TRUE))) ?>
+							<?php echo nl2br(htmlspecialchars(var_export($val, TRUE))) ?>
 						</td>
 					</tr>
 				<?php endforeach; ?>
