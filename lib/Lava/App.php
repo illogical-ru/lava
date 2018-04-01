@@ -17,7 +17,6 @@ use Lava\Session;
 use Lava\Safe;
 use Lava\Route;
 use Lava\Validator;
-use Lava\SQLBuilder;
 
 
 class App {
@@ -305,12 +304,8 @@ class App {
 	}
 
 	public function is_valid ($val, $tests) {
-		$queue = new Validator ($tests);
-		return $queue->test($val);
-	}
-
-	public function sql_builder  () {
-		return new SQLBuilder();
+		$validator = new Validator ($tests);
+		return $validator->test($val);
 	}
 }
 

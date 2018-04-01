@@ -17,7 +17,7 @@ $al  = new Lava\Autoloader;
 $al->extensions('php');
 $al->register  ();
 
-$app = new App (<?php echo htmlspecialchars(var_export($app->conf->_data(), TRUE)) ?>);
+$app = new Lava\App (<?php echo htmlspecialchars(var_export($app->conf->_data(), TRUE)) ?>);
 </pre>
 				</div>
 			</div>

@@ -47,7 +47,7 @@ var_export($app->env-><?php echo $key ?>());
 				<?php foreach ($app->stash->env() as $key => $val): ?>
 					<tr>
 						<th>
-							<a href="<?php echo $app->uri(NULL, array('key' => $key)) ?>"><?php echo htmlspecialchars($key) ?></a>
+							<a href="<?php echo $app->uri('env', array('key' => $key)) ?>"><?php echo htmlspecialchars($key) ?></a>
 						</th>
 						<td class="text-<?php echo is_string($val) ? 'muted' : 'info' ?>">
 							<?php echo nl2br(htmlspecialchars(var_export($val, TRUE))) ?>

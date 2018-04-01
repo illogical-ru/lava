@@ -68,7 +68,7 @@ class Common {
 		$this->app->render(array(
 			'html' => 'HTML Content',
 			'txt'  => function() {
-				return 'Plain text';
+				return 'Plain Text';
 			},
 			'json' => array('foo' => 123),
 			function($app) {

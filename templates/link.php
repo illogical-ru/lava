@@ -107,7 +107,7 @@ echo $app->host('https', 'safe');
 		</div>
 	</div>
 	<div class="well">
-		<h4 class="title ellipsis nowrap">lava->pub([node, ...]) : pub</h4>
+		<h4 class="title ellipsis nowrap">lava->pub([node, ...]) : path</h4>
 		<div class="essense">
 <pre>
 echo $app->pub();

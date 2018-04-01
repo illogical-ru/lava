@@ -50,7 +50,7 @@ $app	->route	('lang/:code')
 	->to	('Controller\Common', 'lang');
 
 // окружение
-$app	->route	('env')
+$app	->route	('env/:key')
 	->name	('env')
 	->to	('Controller\Common', 'env');
 
