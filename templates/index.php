@@ -1,7 +1,7 @@
 <?php
 	if (! isset($app)) exit;
 
-	include 'templates/_header.php';
+	$app->template('_header.php');
 ?>
 <div id="index" class="container">
 	<div class="row">
@@ -34,7 +34,7 @@ $app = new Lava\App (<?php echo htmlspecialchars(var_export($app->conf->_data(),
 							</a>
 						</li>
 						<li>
-							<a href="<?php echo $app->uri('link', array('foo' => 123)) ?>"><?php echo $app->dict()->tr('Links') ?></a>
+							<a href="<?php echo $app->uri('link', array('key_3' => 1, 'page' => 1)) ?>"><?php echo $app->dict()->tr('Links') ?></a>
 						</li>
 						<li>
 							<a href="<?php echo $app->uri('render') ?>"><?php echo $app->dict()->tr('Render') ?></a>
@@ -46,5 +46,5 @@ $app = new Lava\App (<?php echo htmlspecialchars(var_export($app->conf->_data(),
 	</div>
 </div>
 <?php
-	include 'templates/_footer.php';
+	$app->template('_footer.php');
 ?>

@@ -1,7 +1,7 @@
 <?php
 	if (! isset($app)) exit;
 
-	$title   = $app->stash->title();
+	$title   = $data->title();
 	$title[] = $app->dict()->tr('Lab');
 ?>
 <!DOCTYPE html>

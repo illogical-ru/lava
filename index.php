@@ -78,7 +78,7 @@ if (! $app->route_match())
 			header('HTTP/1.0 404 Not Found');
 
 			if ($app->type() == 'html')
-				include 'templates/not-found.php';
+				$app->template('not-found.php');
 		},
 	));
 

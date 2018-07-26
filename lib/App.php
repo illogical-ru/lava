@@ -1,5 +1,8 @@
 <?php
 
+use Lava\Stash;
+
+
 class App extends Lava\App {
 
 	private	$lang;
@@ -8,7 +11,8 @@ class App extends Lava\App {
 	private $dict;
 
 
-	// старт
+	// ------------------------------------------------------------------ //
+
 	public function start () {
 
 		$conf   = $this->conf;
@@ -41,14 +45,13 @@ class App extends Lava\App {
 			}
 	}
 
+	// ------------------------------------------------------------------ //
 
-	// язык пользователя
 	public function lang ($short = FALSE) {
 		return $short	? preg_replace('/-.+/', '', $this->lang)
 				:                           $this->lang;
 	}
 
-	// словарь
 	public function dict ($name = 'main',  $lang = NULL) {
 
 		$name .= '/' . (isset($lang) ? $lang : $this->lang());
@@ -57,6 +60,21 @@ class App extends Lava\App {
 			self::$dict[$name] = new Dict ("dict/${name}.php");
 
 		return  self::$dict[$name];
+	}
+
+	// ------------------------------------------------------------------ //
+
+	public function template ($file, $data = NULL) {
+
+		$app = $this;
+
+		if (   strpos($file, '/') !== 0)
+			$file = "templates/${file}";
+
+		if (! ($data instanceof Stash))
+			$data = new Stash ($data);
+
+		return include $file;
 	}
 }
 

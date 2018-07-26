@@ -1,9 +1,9 @@
 <?php
 	if (! isset($app)) exit;
 
-	$app->stash->title = $app->dict()->tr('Render');
+	$title = $app->dict()->tr('Render');
 
-	include 'templates/_header.php';
+	$app->template('_header.php', array('title' => $title));
 ?>
 <div id="render" class="container">
 	<div id="control">
@@ -47,5 +47,5 @@ $app->render(array(
 	</div>
 </div>
 <?php
-	include 'templates/_footer.php';
+	$app->template('_footer.php');
 ?>

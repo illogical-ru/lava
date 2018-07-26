@@ -1,9 +1,9 @@
 <?php
 	if (! isset($app)) exit;
 
-	$app->stash->title = $app->dict()->tr('Link');
+	$title = $app->dict()->tr('Link');
 
-	include 'templates/_header.php';
+	$app->template('_header.php', array('title' => $title));
 ?>
 <div id="link" class="container">
 	<div id="control">
@@ -11,6 +11,37 @@
 			<i class="fa fa-chevron-left" aria-hidden="true"></i>
 			<?php echo $app->dict()->tr('To Home Page') ?>
 		</a>
+	</div>
+	<div class="well">
+		<h4 class="title ellipsis nowrap">lava->uri(NULL, data, TRUE) : uri</h4>
+		<div class="essense">
+			<div class="row text-center">
+				<div class="col-sm-6">
+					<?php
+						for ($i = 1; $i <= 5; $i++):
+
+							$key = "key_${i}";
+					?>
+							<a href="<?php echo $app->uri(NULL, array($key => ! $app->args->$key), TRUE) ?>" class="btn btn-xs btn-<?php echo $app->args->$key ? 'info' : 'default' ?>">
+								<?php echo htmlspecialchars($key . '=' . $app->args->$key) ?>
+							</a>
+					<?php
+						endfor;
+					?>
+				</div>
+				<div class="col-sm-6">
+					<?php
+						for ($i = 1; $i <= 5; $i++):
+					?>
+							<a href="<?php echo $app->uri(NULL, array('page' => $i), TRUE) ?>" class="btn btn-xs btn-<?php echo $i == $app->args->page ? 'primary' : 'default' ?>">
+								page=<?php echo $i ?>
+							</a>
+					<?php
+						endfor;
+					?>
+				</div>
+			</div>
+		</div>
 	</div>
 	<div class="row">
 		<div class="col-sm-6">
@@ -122,5 +153,5 @@ echo $app->pub('js/main.js');
 	</div>
 </div>
 <?php
-	include 'templates/_footer.php';
+	$app->template('_footer.php');
 ?>

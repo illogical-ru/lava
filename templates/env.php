@@ -1,11 +1,11 @@
 <?php
 	if (! isset($app)) exit;
 
-	$key = $app->args->key;
+	$key   = $app->args->key;
 
-	$app->stash->title = $app->dict()->tr('Env');
+	$title = $app->dict()->tr('Env');
 
-	include 'templates/_header.php';
+	$app->template('_header.php', array('title' => $title));
 ?>
 <div id="env" class="container">
 	<div id="control">
@@ -59,5 +59,5 @@ var_export($app->env-><?php echo $key ?>());
 	</div>
 </div>
 <?php
-	include 'templates/_footer.php';
+	$app->template('_footer.php');
 ?>

@@ -16,7 +16,7 @@ class Common {
 	// главная страница
 	public function index () {
 		$this->app->render(array('html' => function($app) {
-			include 'templates/index.php';
+			$app->template('index.php');
 		}));
 	}
 
@@ -44,7 +44,7 @@ class Common {
 
 		$app->render(array(
 			'html' => function($app) {
-				include 'templates/env.php';
+				$app->template('env.php');
 			},
 			'json' => $app->stash->env(),
 		));
@@ -53,14 +53,14 @@ class Common {
 	// ссылки
 	public function link () {
 		$this->app->render(array('html' => function($app) {
-			include 'templates/link.php';
+			$app->template('link.php');
 		}));
 	}
 
 	// рендер
 	public function render () {
 		$this->app->render(array('html' => function($app) {
-			include 'templates/render.php';
+			$app->template('render.php');
 		}));
 	}
 	// рендер - фрэйм
