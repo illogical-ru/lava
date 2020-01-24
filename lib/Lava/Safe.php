@@ -19,8 +19,13 @@ class Safe {
 
 
 	public function __construct ($opts = NULL) {
+
 		foreach (array('sign', 'algo', 'salt') as $key)
 			if (isset($opts[$key])) $this->$key = $opts[$key];
+
+		$this->salt = preg_split(
+			'//u', $this->salt, -1, PREG_SPLIT_NO_EMPTY
+		);
 	}
 
 
@@ -42,11 +47,11 @@ class Safe {
 
 	public function salt ($size) {
 
-		$salt     = '';
-		$salt_len = strlen($this->salt) - 1;
+		$salt   = '';
+		$mt_max = count($this->salt) - 1;
 
 		while  ($size-- > 0)
-			$salt .= $this->salt{mt_rand(0, $salt_len)};
+			$salt .= $this->salt[mt_rand(0, $mt_max)];
 
 		return  $salt;
 	}

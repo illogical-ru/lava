@@ -69,27 +69,23 @@ class Args {
 		$query = $append ? $this->_get()->_data() : array();
 
 		foreach ($data as $key => $val)
-			$query[$key] = $this->_normalize($val, FALSE);
+			$query[$key] = $this->_normalize($val);
 
 		return  http_build_query($query);
 	}
 
-	private function _normalize ($val, $gpc = NULL) {
-
-		if   (! isset   ($gpc)) $gpc = get_magic_quotes_gpc();
-
+	private function _normalize ($val) {
 		if   (  is_array($val)) {
 
 			foreach ($val as &$item)
-				$item = $this->_normalize($item, $gpc);
+				$item = $this->_normalize($item);
 
 			return	$val;
 		}
 		else {
 			$val = trim($val);
 
-			if ($val != '')
-				return $gpc ? stripslashes($val) : $val;
+			if ($val != '') return $val;
 		}
 	}
 }

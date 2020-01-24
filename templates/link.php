@@ -22,7 +22,7 @@
 
 							$key = "key_${i}";
 					?>
-							<a href="<?php echo $app->uri(NULL, array($key => ! $app->args->$key), TRUE) ?>" class="btn btn-xs btn-<?php echo $app->args->$key ? 'info' : 'default' ?>">
+							<a href="<?php echo htmlspecialchars($app->uri(NULL, array($key => ! $app->args->$key), TRUE)) ?>" class="btn btn-xs btn-<?php echo $app->args->$key ? 'info' : 'default' ?>">
 								<?php echo htmlspecialchars($key . '=' . $app->args->$key) ?>
 							</a>
 					<?php
@@ -33,7 +33,7 @@
 					<?php
 						for ($i = 1; $i <= 5; $i++):
 					?>
-							<a href="<?php echo $app->uri(NULL, array('page' => $i), TRUE) ?>" class="btn btn-xs btn-<?php echo $i == $app->args->page ? 'primary' : 'default' ?>">
+							<a href="<?php echo htmlspecialchars($app->uri(NULL, array('page' => $i), TRUE)) ?>" class="btn btn-xs btn-<?php echo $i == $app->args->page ? 'primary' : 'default' ?>">
 								page=<?php echo $i ?>
 							</a>
 					<?php
