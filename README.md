@@ -649,7 +649,7 @@ $data = $storage
 # query: SELECT * FROM `users` ORDER BY `name` ASC, `email` DESC
 ```
 
-#### factory->limit(count) : factory
+#### factory->limit(count[, offset]) : factory
 
 Ограничения количества возвращаемых записей
 
@@ -660,20 +660,6 @@ $data = $storage
     ->get();
 # query: SELECT * FROM `users` LIMIT ?
 # bind:  10
-```
-
-#### factory->offset(count) : factory
-
-Смещение относительно начала
-
-```php
-$data = $storage
-    ->factory('users')
-    ->limit(5)
-    ->offset(10)
-    ->get();
-# query: SELECT * FROM `users` LIMIT ? OFFSET ?
-# bind:  5, 10
 ```
 
 #### factory->add(data) : row_count

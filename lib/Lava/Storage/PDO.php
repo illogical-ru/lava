@@ -174,8 +174,7 @@ namespace Lava\Storage\PDO {
                 $group_by = [],
                 $having,
                 $order_by = [],
-                $limit,
-                $offset;
+                $limit    = [];
 
 
         public function __construct (
@@ -265,12 +264,10 @@ namespace Lava\Storage\PDO {
             }
 
             if ($this->limit) {
-                $query[] = 'LIMIT ?';
-                $bind [] = $this->limit;
-            }
-            if ($this->offset) {
-                $query[] = 'OFFSET ?';
-                $bind [] = $this->offset;
+                $query[] = 'LIMIT '    . join(
+                    ', ',  array_fill (1, count($this->limit), '?')
+                );
+                $bind    = array_merge($bind,   $this->limit);
             }
 
             return [
@@ -357,12 +354,14 @@ namespace Lava\Storage\PDO {
             return $this;
         }
 
-        public function limit  ($limit) {
-            $this->limit  = $limit;
-            return $this;
-        }
-        public function offset ($offset) {
-            $this->offset = $offset;
+        public function limit ($count, $offset = 0) {
+
+            $this->limit = [$count];
+
+            if ($offset) {
+                array_unshift($this->limit, $offset);
+            }
+
             return $this;
         }
 
