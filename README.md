@@ -551,7 +551,7 @@ $data = $storage
 
 #### factory->filter*(expression) : factory
 
-Фильтрация данных: `filter_eq`, `filter_ne`, `filter_lt`, `filter_gt`, `filter_lte`, `filter_gte`, `filter_like`, `filter_not_like`, `filter_in`, `filter_not_in`, `filter_is_null`, `filter_is_not_null`, `filter_raw`
+Фильтрация данных: `filter_eq`, `filter_ne`, `filter_lt`, `filter_gt`, `filter_lte`, `filter_gte`, `filter_like`, `filter_not_like`, `filter_in`, `filter_not_in`, `filter_between`, `filter_is_null`, `filter_is_not_null`, `filter_raw`
 
 Изменение контекста: `filter_and`, `filter_or`, `filter_not`
 
@@ -617,7 +617,7 @@ $data = $storage
 
 По аналогии с `filter`
 
-Фильтрация данных: `having_eq`, `having_ne`, `having_lt`, `having_gt`, `having_lte`, `having_gte`, `having_like`, `having_not_like`, `having_in`, `having_not_in`, `having_is_null`, `having_is_not_null`, `having_raw`
+Фильтрация данных: `having_eq`, `having_ne`, `having_lt`, `having_gt`, `having_lte`, `having_gte`, `having_like`, `having_not_like`, `having_in`, `having_not_in`, `having_between`, `having_is_null`, `having_is_not_null`, `having_raw`
 
 Изменение контекста: `having_and`, `having_or`, `having_not`
 

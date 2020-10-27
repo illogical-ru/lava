@@ -602,16 +602,22 @@ namespace Lava\Storage\PDO\Factory {
             foreach ($this->stack as $filter) {
                 if   ($filter instanceof self) {
 
-                    $filter = $filter();
+                    $filter  = $filter();
 
-                    if ($filter['query']) {
-                        $query[] =                    $filter['query'];
-                        $bind    = array_merge($bind, $filter['bind']);
+                    if     ($filter['query']) {
+                        $query[]  =                    $filter['query'];
+                        $bind     = array_merge($bind, $filter['bind']);
                     }
                 }
                 else {
 
-                    list   ($operator, $key, $val) = $filter;
+                    list   ($operator, $key, $val) =  $filter;
+
+                    if     ($operator == 'raw') {
+                        $query[]  =                           $key;
+                        $bind     = array_merge($bind, (array)$val);
+                        continue;
+                    }
 
                     if     ($operator == 'eq') {
                         $operator = isset($val) ?  '=' : 'is';
@@ -632,26 +638,33 @@ namespace Lava\Storage\PDO\Factory {
                         $operator = '>=';
                     }
 
-                    $key = \Lava\Storage\PDO\Factory::escape_key($key);
-
-                    if     ($operator == 'in' || $operator == 'not in') {
-                        $val     = (array)$val;
-                        $query[] = sprintf(
-                            '%s %s (%s)',
-                            $key,
-                            strtoupper($operator),
-                            join(', ', array_fill(1, count($val), '?'))
-                        );
-                        $bind    = array_merge($bind,        $val);
+                    if     ($val instanceof \Lava\Storage\PDO\Factory) {
+                        $val      = $val();
+                        $expr     = "(${val['query']})";
+                        $val      = $val['bind'];
                     }
-                    elseif ($operator == 'raw') {
-                        $query[] = $key;
-                        $bind    = array_merge($bind, (array)$val);
+                    elseif ($operator == 'in' || $operator == 'not in') {
+                        $val      = (array)$val;
+                        $expr     = (
+                              '('
+                            . join(', ', array_fill(1, count($val), '?'))
+                            . ')'
+                        );
+                    }
+                    elseif ($operator == 'between') {
+                        $expr     = '? AND ?';
                     }
                     else   {
-                        $query[] = $key . strtoupper(" ${operator} ?");
-                        $bind [] = $val;
+                        $val      = [$val];
+                        $expr     = '?';
                     }
+
+                    $query[] = join(' ', [
+                        \Lava\Storage\PDO\Factory::escape_key($key),
+                        strtoupper($operator),
+                        $expr,
+                    ]);
+                    $bind    = array_merge($bind, $val);
                 }
             }
 
@@ -673,44 +686,50 @@ namespace Lava\Storage\PDO\Factory {
         }
 
 
-        public function eq  () {
-            return $this->_operator('eq',       func_get_args());
+        public function eq  ($key, $val) {
+            return $this->_operator('eq',       [$key, $val]);
         }
-        public function ne  () {
-            return $this->_operator('ne',       func_get_args());
+        public function ne  ($key, $val) {
+            return $this->_operator('ne',       [$key, $val]);
         }
-        public function lt  () {
-            return $this->_operator('lt',       func_get_args());
+        public function lt  ($key, $val) {
+            return $this->_operator('lt',       [$key, $val]);
         }
-        public function gt  () {
-            return $this->_operator('gt',       func_get_args());
+        public function gt  ($key, $val) {
+            return $this->_operator('gt',       [$key, $val]);
         }
-        public function lte () {
-            return $this->_operator('lte',      func_get_args());
+        public function lte ($key, $val) {
+            return $this->_operator('lte',      [$key, $val]);
         }
-        public function gte () {
-            return $this->_operator('gte',      func_get_args());
-        }
-
-        public function like     () {
-            return $this->_operator('like',     func_get_args());
-        }
-        public function not_like () {
-            return $this->_operator('not like', func_get_args());
+        public function gte ($key, $val) {
+            return $this->_operator('gte',      [$key, $val]);
         }
 
-        public function in     () {
-            return $this->_operator('in',       func_get_args());
+        public function like     ($key, $val) {
+            return $this->_operator('like',     [$key, $val]);
         }
-        public function not_in () {
-            return $this->_operator('not in',   func_get_args());
+        public function not_like ($key, $val) {
+            return $this->_operator('not like', [$key, $val]);
         }
 
-        public function is_null     ($expr) {
-            return $this->_operator('eq',       [$expr, NULL]);
+        public function in     ($key, $val) {
+            return $this->_operator('in',       [$key, $val]);
         }
-        public function is_not_null ($expr) {
-            return $this->_operator('ne',       [$expr, NULL]);
+        public function not_in ($key, $val) {
+            return $this->_operator('not in',   [$key, $val]);
+        }
+
+        public function between ($key, array $val) {
+            return $this->_operator('between',  [
+                $key, [array_shift($val), array_shift($val)]
+            ]);
+        }
+
+        public function is_null     ($key) {
+            return $this->_operator('eq',       [$key, NULL]);
+        }
+        public function is_not_null ($key) {
+            return $this->_operator('ne',       [$key, NULL]);
         }
 
         public function raw ($expr, $bind = NULL) {
