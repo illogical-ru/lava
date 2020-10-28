@@ -110,6 +110,16 @@ namespace Lava\Storage {
             return $assoc;
         }
 
+        public function begin () {
+            return $this->ref->beginTransaction();
+        }
+        public function commit () {
+            return $this->ref->commit();
+        }
+        public function rollback () {
+            return $this->ref->rollBack();
+        }
+
         public function last_insert_id () {
             return $this->ref->lastInsertId();
         }
@@ -366,7 +376,7 @@ namespace Lava\Storage\PDO {
         }
 
 
-        public function add ($data) {
+        public function add ($data, $update = NULL) {
 
             $query = [
                 'INSERT',
@@ -392,6 +402,13 @@ namespace Lava\Storage\PDO {
             }
 
             $bind  = array_merge($bind, $set['bind']);
+
+            if   ($update) {
+                $update  = $this->_data($update);
+                $query[] = 'ON DUPLICATE KEY';
+                $query[] = 'UPDATE ' .        $update['query'];
+                $bind    = array_merge($bind, $update['bind']);
+            }
 
             return $this->storage->exec(join(' ', $query), $bind);
         }

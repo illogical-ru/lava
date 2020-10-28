@@ -158,11 +158,17 @@ class Validator {
 			&& self::is_time($match[2]);
 	}
 
-	static public function is_less_than    ($val, $num = 0) {
-		return is_numeric($val) && $val < $num;
+	static public function is_lt  ($val, $num = 0) {
+		return is_numeric($val) && $val <  $num;
 	}
-	static public function is_greater_than ($val, $num = 0) {
-		return is_numeric($val) && $val > $num;
+	static public function is_lte ($val, $num = 0) {
+		return is_numeric($val) && $val <= $num;
+	}
+	static public function is_gt  ($val, $num = 0) {
+		return is_numeric($val) && $val >  $num;
+	}
+	static public function is_gte ($val, $num = 0) {
+		return is_numeric($val) && $val >= $num;
 	}
 }
 

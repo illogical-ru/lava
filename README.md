@@ -412,8 +412,10 @@ echo $foo->safe->salt(16); # 1001001110111100
 - date
 - time
 - datetime
-- less_than[:num]
-- greater_than[:num]
+- lt[:num]
+- lte[:num]
+- gt[:num]
+- gte[:num]
 
 - bool
 - array
@@ -598,6 +600,15 @@ $data = $storage
     ->get();
 # query: SELECT * FROM `users` WHERE NOT ((`name` = ? OR `email` = ?) AND `role_id` IN (?, ?, ?))
 # bind:  'guest', 'test', 2, 4, 6
+
+// подзапросы
+
+$data = $storage
+    ->factory('users')
+    ->filter_in('id', $storage->factory('sessions')->columns('user_id')->filter('active', 1))
+    ->get();
+# query: SELECT * FROM `users` WHERE `id` IN (SELECT `user_id` FROM `sessions` WHERE `active` = ?)
+# bind:  1
 ```
 
 #### factory->group_by(expression) : factory
@@ -662,7 +673,7 @@ $data = $storage
 # bind:  10
 ```
 
-#### factory->add(data) : row_count
+#### factory->add(data[, update]) : row_count
 
 Вставка данных
 
@@ -687,6 +698,13 @@ $users->columns(['login', 'email'])->add(
 # query: INSERT INTO `users` (`login`, `email`)
 #        SELECT `username`, `email` FROM `archive_users` WHERE `id` < ?
 # bind:  123
+
+$storage
+    ->factory('log')
+    ->add(['name' => 'access', 'count' => 1], ['count = count + 1']);
+# query: INSERT INTO `log` SET `name` = ?, `count` = ?
+#        ON DUPLICATE KEY UPDATE count = count + 1
+# bind:  'access', 1
 ```
 
 #### factory->set(data) : row_count

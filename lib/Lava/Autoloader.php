@@ -9,9 +9,9 @@
 
 namespace Lava;
 
-// PHP >= 5.3
-if (version_compare(phpversion(), '5.3') < 0)
-	die('PHP 5.3+ is required');
+// PHP >= 5.4
+if (version_compare(phpversion(), '5.4') < 0)
+	throw new \Exception('PHP 5.4+ is required');
 
 
 class Autoloader {
