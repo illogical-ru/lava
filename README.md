@@ -353,7 +353,7 @@ $foo = new Lava\App (['safe' => ['algo' => 'sha256']]);
 echo $foo->safe->uuid(); # 49f2fbf757264416475e27e0ed7c56e89c69abc9efdd639ec6d6d2d4e521a8ea
 ```
 
-### lava->safe->uuid_signed() : array(signed_uuid, uuid)
+### lava->safe->uuid_signed() : [signed_uuid, uuid]
 
 Возвращает подписанный UUID
 

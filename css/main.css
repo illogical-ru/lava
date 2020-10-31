@@ -13,63 +13,63 @@ html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:1
 /* site */
 
 html {
-	position: relative;
-	min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-	background-color: white;
+    background-color: white;
 }
 
 footer {
-	padding: 10px 0;
-	border-top: 1px solid #eee;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
 }
 
 pre {
-	border-radius: 0;
-	color: #888;
-	border: 0;
-	border-left: 3px solid #ddd;
+    border-radius: 0;
+    color: #888;
+    border: 0;
+    border-left: 3px solid #ddd;
 }
 
 iframe {
-	margin: 10px 0;
-	width: 100%;
-	border: 1px dashed #ccc;
+    margin: 10px 0;
+    width: 100%;
+    border: 1px dashed #ccc;
 }
 
 #content {
-	padding-top: 30px;
-	padding-bottom: 16px;
-	background-color: #f4f4f4;
+    padding-top: 30px;
+    padding-bottom: 16px;
+    background-color: #f4f4f4;
 }
 
 #control {
-	margin-bottom: 30px;
+    margin-bottom: 30px;
 }
 
 .well {
-	background-color: white;
-	border-radius: 0;
-	border: 1px solid #eee;
-	border-right: 1px solid #ddd;
-	border-bottom: 1px solid #ddd;
+    background-color: white;
+    border-radius: 0;
+    border: 1px solid #eee;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
 }
 .well .title {
-	margin-top: 0;
-	margin-bottom: 10px;
-	padding-bottom: 15px;
-	border-bottom: 1px solid #eee;
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
 }
 .well .essense {
-	margin-bottom: -10px;
+    margin-bottom: -10px;
 }
 
 .ellipsis {
-	overflow: hidden;
-	text-overflow: ellipsis;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .nowrap {
-	white-space: nowrap;
+    white-space: nowrap;
 }

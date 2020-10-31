@@ -10,108 +10,125 @@
 namespace Lava;
 
 // PHP >= 5.4
-if (version_compare(phpversion(), '5.4') < 0)
-	throw new \Exception('PHP 5.4+ is required');
+if (version_compare(phpversion(), '5.4') < 0) {
+    throw new \Exception('PHP 5.4+ is required');
+}
 
 
 class Autoloader {
 
-	private $include    = array(),
-		$extensions = array(),
-		$prefixes   = array();
+    private $include    = [],
+            $extensions = [],
+            $prefixes   = [];
 
 
-	public function __construct () {
+    public function __construct () {
 
-		// include
+        // include
 
-		$this->include[] = substr(
-			__DIR__, 0, strrpos(__DIR__, DIRECTORY_SEPARATOR)
-		);
+        $this->include[] = substr(
+            __DIR__, 0, strrpos(__DIR__, DIRECTORY_SEPARATOR)
+        );
 
-		foreach (explode(PATH_SEPARATOR, get_include_path()) as $path)
-			if (preg_match('/(\S+(?:.*\S)?)/',  $path, $match))
-				$this->include[]    = $match[1];
+        foreach (explode(PATH_SEPARATOR, get_include_path()) as $path) {
+            if (preg_match('/(\S+(?:.*\S)?)/', $path, $match)) {
+                $this->include[]    = $match[1];
+            }
+        }
 
-		// extensions
+        // extensions
 
-		foreach (explode(',', spl_autoload_extensions())     as $ext)
-			if (preg_match('/^\s*\.(\S+)\s*$/', $ext,  $match))
-				$this->extensions[] = $match[1];
-	}
+        foreach (explode(',', spl_autoload_extensions())     as $ext) {
+            if (preg_match('/^\s*\.(\S+)\s*$/', $ext, $match)) {
+                $this->extensions[] = $match[1];
+            }
+        }
+    }
 
 
-	public function register   ($prepend = FALSE) {
-		return spl_autoload_register  (
-			array($this, 'load'), TRUE, $prepend
-		);
-	}
-	public function unregister () {
-		return spl_autoload_unregister(
-			array($this, 'load')
-		);
-	}
+    public function register   ($prepend = FALSE) {
+        return spl_autoload_register  ([$this, 'load'], TRUE, $prepend);
+    }
+    public function unregister () {
+        return spl_autoload_unregister([$this, 'load']);
+    }
 
-	public function registerPrefix   ($name, $paths) {
-		$this->prefixes[$name] = (array) $paths;
-	}
-	public function registerPrefixes (array  $data) {
-		foreach ($data as $name => $paths)
-			$this->registerPrefix($name, $paths);
-	}
+    public function registerPrefix   ($name, $paths) {
+        $this->prefixes[$name] = (array)$paths;
+    }
+    public function registerPrefixes (array $data) {
+        foreach ($data as $name => $paths) {
+            $this->registerPrefix($name, $paths);
+        }
+    }
 
-	public function extensions ($ext = NULL) {
-		if (isset($ext))
-			$this->extensions = (array)$ext;
-		return  $this->extensions;
-	}
+    public function extensions ($ext = NULL) {
 
-	public function find ($class) {
+        if (isset($ext)) {
+            $this->extensions = (array)$ext;
+        }
 
-		$include    = $this->include;
-		$separator  = DIRECTORY_SEPARATOR;
-		$is_ns      = strpos($class, '\\') !== FALSE;
+        return $this->extensions;
+    }
 
-		foreach ($this->prefixes as $prefix => $paths) {
+    public function find ($class) {
 
-			if ($is_ns)				$prefix .= '\\';
+        $include    = $this->include;
+        $separator  = DIRECTORY_SEPARATOR;
+        $is_ns      = strpos($class, '\\') !== FALSE;
 
-			if (strpos($class, $prefix) !== 0)	continue;
+        foreach ($this->prefixes as $prefix => $paths) {
 
-			$class   = substr($class, strlen($prefix));
+            if ($is_ns) {
+                $prefix .= '\\';
+            }
 
-			$count   = count ($include);
+            if (strpos($class, $prefix) !== 0) {
+                continue;
+            }
 
-			foreach ($paths as $path)
-				if   (strpos($path, $separator) === 0)
-						$include[] =	  $path;
-				else
-					for ($i = 0; $i < $count; $i++)
-						$include[] =	  $include[$i]
-								. $separator
-								. $path;
+            $class   = substr($class, strlen($prefix));
 
-			$include = array_splice($include, $count);
+            $count   = count ($include);
 
-			break;
-		}
+            foreach ($paths as $path) {
+                if   (strpos($path, $separator) === 0) {
+                        $include[] = $path;
+                }
+                else {
+                    for ($i = 0; $i < $count; $i++) {
+                        $include[] = $include[$i] . $separator . $path;
+                    }
+                }
+            }
 
-		$class_path = strtr($class, $is_ns ? '\\' : '_', $separator);
+            $include = array_splice($include, $count);
 
-		foreach ($include as $path) {
+            break;
+        }
 
-			$file = $path . $separator . $class_path;
+        $class_path = strtr($class, $is_ns ? '\\' : '_', $separator);
 
-			foreach ($this->extensions as $ext)
-				if (file_exists("${file}.${ext}"))
-					return  "${file}.${ext}";
-		}
-	}
+        foreach ($include as $path) {
 
-	public function load ($class) {
-		$file = $this->find($class);
-		if ($file) return require $file;
-	}
+            $file = $path . $separator . $class_path;
+
+            foreach ($this->extensions as $ext) {
+                if (file_exists("${file}.${ext}")) {
+                    return      "${file}.${ext}";
+                }
+            }
+        }
+    }
+
+    public function load ($class) {
+
+        $file = $this->find($class);
+
+        if ($file) {
+            return  require $file;
+        }
+    }
 }
 
 ?>

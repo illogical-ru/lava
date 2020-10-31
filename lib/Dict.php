@@ -2,54 +2,66 @@
 
 class Dict {
 
-	private $data;
+    private $data;
 
 
-	public function __construct  ($file) {
-		$this->data = include $file;
-	}
+    public function __construct ($file) {
+        $this->data = include    $file;
+    }
 
 
-	public function tr ($args, $prefix = NULL) {
+    public function tr ($args, $prefix = NULL) {
 
-		$is_array = is_array($args);
-		$args     =   (array)$args;
+        $is_array = is_array($args);
+        $args     =   (array)$args;
 
-		foreach ($args as $key => &$val) {
+        foreach ($args as $key => &$val) {
 
-			$keys = array();
+            $keys   = [];
 
-			if (isset    ($prefix))	$keys[] = $prefix;
-			if (is_string($key))	$keys[] = $key;
-						$keys[] = $val;
-			while  ($keys) {
+            if (isset    ($prefix)) {
+                $keys[] = $prefix;
+            }
+            if (is_string($key)) {
+                $keys[] = $key;
+            }
 
-				$key = strtolower(preg_replace(
-					'/\s+/', '_',  join('_', $keys)
-				));
+            $keys[] = $val;
 
-				array_shift($keys);
+            while ($keys) {
 
-				if (! isset($this->data[$key])) continue;
+                $key = strtolower(preg_replace(
+                    '/\s+/', '_',  join('_', $keys)
+                ));
 
-				$val = $this->data[$key];
-				$val = is_array($val)	? current($val)
-							:         $val;
-				break;
-			}
-		}
+                array_shift($keys);
 
-		return $is_array ? $args : array_shift($args);
-	}
+                if (! isset($this->data[$key])) {
+                    continue;
+                }
 
-	public function ls ($key) {
-		return isset($this->data[$key])	? (array)$this->data[$key]
-						:  array();
-	}
+                $val = $this->data[$key];
 
-	public function has_key ($key) {
-		return isset($this->data[$key]);
-	}
+                if (  is_array    ($val)) {
+                    $val = current($val);
+                }
+
+                break;
+            }
+        }
+
+        return $is_array ? $args : array_shift($args);
+    }
+
+    public function ls ($key) {
+        return isset($this->data[$key])
+            ? (array)$this->data[$key]
+            : [];
+    }
+
+    public function has_key ($key) {
+        return isset($this->data[$key]);
+    }
 }
 
 ?>

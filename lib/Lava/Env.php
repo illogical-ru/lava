@@ -14,86 +14,93 @@ use Lava\Stash;
 
 class Env extends Stash {
 
-	static
-	private $aliases = array(
+    static
+    private $aliases = [
 
-		'server_name'     => '=localhost',
-		'server_port'     => '=80',
-		'server_protocol' => '=HTTP/1.0',
-		'server_software' => '=PHP',
+        'server_name'     => '=localhost',
+        'server_port'     => '=80',
+        'server_protocol' => '=HTTP/1.0',
+        'server_software' => '=PHP',
 
-		'user'            => 'remote_user',
-		'user_addr'       => 'remote_addr',
-		'user_port'       => 'remote_port',
-		'user_agent'      => 'http_user_agent',
+        'user'            => 'remote_user',
+        'user_addr'       => 'remote_addr',
+        'user_port'       => 'remote_port',
+        'user_agent'      => 'http_user_agent',
 
-		'host'            => 'http_host server_name',
-		'method'          => 'request_method =GET',
-		'type'            => 'content_type',
-		'length'          => 'content_length =0',
-		'script'          => 'script_name php_self',
-		'query'           => 'query_string',
-		'referer'         => 'http_referer',
-	);
+        'host'            => 'http_host server_name',
+        'method'          => 'request_method =GET',
+        'type'            => 'content_type',
+        'length'          => 'content_length =0',
+        'script'          => 'script_name php_self',
+        'query'           => 'query_string',
+        'referer'         => 'http_referer',
+    ];
 
 
-	public function __construct () {
+    public function __construct () {
 
-		$data = array();
+        $data = [];
 
-		foreach ($_SERVER as $key => $val) {
+        foreach ($_SERVER as $key => $val) {
 
-			$key    = strtolower($key);
-			$data[$key] = $val;
+            $key    = strtolower($key);
 
-			// accept*
-			if (! preg_match('/^http_(accept(?:|_\w+))$/', $key, $match))
-				continue;
+            $data[$key] = $val;
 
-			$key    = $match[1];
-			$accept = array ( );
+            // accept*
+            if (! preg_match('/^http_(accept(?:|_\w+))$/', $key, $match)) {
+                continue;
+            }
 
-			foreach (preg_split('/[\s,]+/', $val) as $val) {
-				preg_match(
-					'/(.*?)(?:\s*;\s*q=(\d+(?:\.\d+)?))?$/',
-					$val, $match
-				);
-				$accept[$match[1]] = isset($match[2]) ? $match[2] : 1;
-			}
+            $key    = $match[1];
+            $accept = [];
 
-			              arsort                  ($accept);
-			$data[$key] = array_reverse(array_keys($accept));
-		}
+            foreach (preg_split('/[\s,]+/', $val) as $val) {
+                preg_match(
+                    '/(.*?)(?:\s*;\s*q=(\d+(?:\.\d+)?))?$/', $val, $match
+                );
+                $accept[$match[1]] = isset($match[2]) ? $match[2] : 1;
+            }
 
-		foreach (self::$aliases as $key => $val) {
+                          arsort                  ($accept);
+            $data[$key] = array_reverse(array_keys($accept));
+        }
 
-			preg_match_all('/(=)?(\S+)/', "${key} ${val}", $match);
+        foreach (self::$aliases as $key => $val) {
 
-			foreach ($match[2] as $i => $val) {
-				if (! $match[1][$i])
-					$val = isset($data[$val]) ? $data[$val] : NULL;
-				if (  isset($val)) {
-					$data[$key] = $val;
-					break;
-				}
-			}
-		}
+            preg_match_all('/(=)?(\S+)/', "${key} ${val}", $match);
 
-		$uri  = isset($data['document_uri'])	? $data['document_uri']
-							: $data['script'];
+            foreach ($match[2] as $i => $val) {
+                if (! $match[1][$i]) {
+                    $val = isset($data[$val]) ? $data[$val] : NULL;
+                }
+                if (  isset($val)) {
+                    $data[$key] = $val;
+                    break;
+                }
+            }
+        }
 
-		$data['uri']        = isset($data['request_uri'])
-			? preg_replace('/\?.*/', '', urldecode($data['request_uri']))
-			: $uri;
+        $uri  = isset($data['document_uri'])
+            ?         $data['document_uri']
+            :         $data['script'];
 
-		$data['is_https']   = isset($data['https'])
-					&&  $data['https'] != ''
-					&&  $data['https'] != 'off';
-		$data['is_rewrite'] = $data['uri']    != $uri;
-		$data['is_post']    = $data['method'] == 'POST';
+        $data['uri']        = isset    ($data['request_uri'])
+            ? preg_replace(
+                '/\?.*/', '', urldecode($data['request_uri'])
+              )
+            : $uri;
 
-		parent::__construct($data);
-	}
+        $data['is_https']   = (
+               isset($data['https'])
+            &&       $data['https'] != ''
+            &&       $data['https'] != 'off'
+        );
+        $data['is_rewrite'] = $data['uri']    != $uri;
+        $data['is_post']    = $data['method'] == 'POST';
+
+        parent::__construct($data);
+    }
 }
 
 ?>

@@ -8,78 +8,69 @@ require_once 'lib/Lava/Autoloader.php';
 
 $al  = new Lava\Autoloader;
 
-$al->registerPrefixes(array(
-	'Controller' => 'controllers',
-));
+$al->registerPrefixes([
+    'Controller' => 'controllers',
+]);
 $al->extensions      ('php');
 $al->register        ();
 
 // --- приложение ----------------------------------------------------------- //
 
-$app = new App (array(
-
-	'type'     => 'html',
-	'charset'  => 'UTF-8',
-
-	'langs'    => array(
-		'ru-RU' => 'Русский',
-		'en-US' => 'English',
-	),
-
-	'timezone' => 'UTC',
-));
-
+$app = new App (require 'conf.php');
 
 // кодировка
-if (function_exists('mb_internal_encoding'))
-	mb_internal_encoding($app->conf->charset);
+if (function_exists('mb_internal_encoding')) {
+    mb_internal_encoding ($app->conf->charset);
+}
 
 // зона
-date_default_timezone_set   ($app->conf->timezone);
+date_default_timezone_set($app->conf->timezone);
 
 // --- контроллёры ---------------------------------------------------------- //
 
 // главная страница
-$app	->route	()
-	->name	('index')
-	->to	('Controller\Common', 'index');
+$app->route()
+    ->name ('index')
+    ->to   ('Controller\Common', 'index');
 
 // язык
-$app	->route	('lang/:code')
-	->name	('lang')
-	->to	('Controller\Common', 'lang');
+$app->route('lang/:code')
+    ->name ('lang')
+    ->to   ('Controller\Common', 'lang');
 
 // окружение
-$app	->route	('env/:key')
-	->name	('env')
-	->to	('Controller\Common', 'env');
+$app->route('env/:key')
+    ->name ('env')
+    ->to   ('Controller\Common', 'env');
 
 // ссылки
-$app	->route	('link')
-	->name	('link')
-	->to	('Controller\Common', 'link');
+$app->route('link')
+    ->name ('link')
+    ->to   ('Controller\Common', 'link');
 
 // рендер
-$app	->route	('render')
-	->name	('render')
-	->to	('Controller\Common', 'render');
+$app->route('render')
+    ->name ('render')
+    ->to   ('Controller\Common', 'render');
 // рендер - фрэйм
-$app	->route	('render/item')
-	->name	('render-item')
-	->to	('Controller\Common', 'render_iframe');
+$app->route('render/item')
+    ->name ('render-item')
+    ->to   ('Controller\Common', 'render_iframe');
 
 // --- 404 ------------------------------------------------------------------ //
 
-if (! $app->route_match())
-	$app->render(array(
-		'json' => array('error' => 'not-found'),
-		function($app) {
+if (! $app->route_match()) {
+    $app->render([
+        'json' => ['error' => 'not-found'],
+        function($app) {
 
-			header('HTTP/1.0 404 Not Found');
+            header('HTTP/1.0 404 Not Found');
 
-			if ($app->type() == 'html')
-				$app->template('not-found.php');
-		},
-	));
+            if ($app->type() == 'html') {
+                $app->template('not-found.php');
+            }
+        },
+    ]);
+}
 
 ?>
