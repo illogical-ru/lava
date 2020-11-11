@@ -19,7 +19,20 @@ class Args {
 
     public function __construct () {
 
-        $data = ['get' => $_GET, 'post' => $_POST, []];
+        $method = strtolower($_SERVER['REQUEST_METHOD']);
+        $data   = [
+            'get'  => $_GET,
+            'post' => $_POST,
+        ];
+
+        if (! isset($data[$method])) {
+            parse_str(
+                file_get_contents('php://input'),
+                $data[$method]
+            );
+        }
+
+        $data[] = [];
 
         foreach ($data as $method => $args) {
 
