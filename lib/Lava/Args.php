@@ -19,17 +19,34 @@ class Args {
 
     public function __construct () {
 
-        $method = strtolower($_SERVER['REQUEST_METHOD']);
         $data   = [
-            'get'  => $_GET,
-            'post' => $_POST,
+            'GET'  => $_GET,
+            'POST' => $_POST,
         ];
 
-        if (! isset($data[$method])) {
-            parse_str(
-                file_get_contents('php://input'),
-                $data[$method]
-            );
+        if (isset    ($_SERVER['REQUEST_METHOD'])) {
+
+            $method = $_SERVER['REQUEST_METHOD'];
+
+            if (      isset($_SERVER['CONTENT_TYPE'])
+                &&    isset($_SERVER['CONTENT_LENGTH'])
+                &&          $_SERVER['CONTENT_LENGTH']
+                && ! (isset($data[$method]) && $data[$method])
+            )
+            {
+                $type  = strtolower($_SERVER['CONTENT_TYPE']);
+                $input = file_get_contents('php://input');
+
+                if     (preg_match(
+                    '|^application/json(?:;\s*charset=utf-8)?$|', $type
+                ))
+                {
+                    $data[$method] = (array)json_decode($input, TRUE);
+                }
+                elseif ($type == 'application/x-www-form-urlencoded') {
+                    parse_str($input, $data[$method]);
+                }
+            }
         }
 
         $data[] = [];
@@ -82,10 +99,10 @@ class Args {
     }
 
     public function _get () {
-        return $this->data['get'];
+        return $this->data['GET'];
     }
     public function _post () {
-        return $this->data['post'];
+        return $this->data['POST'];
     }
 
     public function _query ($data, $append = FALSE) {
