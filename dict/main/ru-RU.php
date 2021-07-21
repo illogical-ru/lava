@@ -6,6 +6,7 @@ return [
     'hello,_world' => 'Привет, мир',
 
     'useful'       => 'Полезное',
+    'environment'  => 'Окружение',
     'links'        => 'Ссылки',
     'render'       => 'Рендер',
 

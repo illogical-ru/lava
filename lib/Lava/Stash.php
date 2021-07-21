@@ -63,7 +63,7 @@ class Stash {
                unset($this->data[$key]);
     }
 
-    public function _has_key ($key) {
+    public function _has ($key) {
         return key_exists($key, $this->data);
     }
 

@@ -12,15 +12,15 @@ namespace Lava;
 
 class Session {
 
-    public function __get ($key) {
-        if (isset($_SESSION[$key])) {
+    public function __get            ($key) {
+        if (isset          ($_SESSION[$key])) {
             return is_array($_SESSION[$key])
                 ?  end     ($_SESSION[$key])
                 :           $_SESSION[$key];
         }
     }
-    public function __set ($key, $val) {
-        return $_SESSION[$key] = $val;
+    public function __set ($key,   $val) {
+        return $_SESSION  [$key] = $val;
     }
 
     public function __call ($key, $args) {

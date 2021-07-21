@@ -1,53 +1,44 @@
 <?php
-    if (! isset($app)):
-        exit;
-    endif;
 
-    $key = $app->args->key;
+    $key = $data->key;
 
-    $app->template('_header.php', ['title' => $app->dict()->tr('ENV')]);
+    App::template('_header.php', ['title' => App::dict()->tr('Environment')]);
 ?>
 <div id="env" class="container">
     <div id="control">
-        <a href="<?php echo $app->uri('index'); ?>">
+        <a href="<?php echo App::uri('index'); ?>">
             <i class="fa fa-chevron-left" aria-hidden="true"></i>
-            <?php echo $app->dict()->tr('To Home Page'); ?>
+            <?php echo App::dict()->tr('To Home Page'); ?>
         </a>
     </div>
     <?php if (preg_match('/^\w+$/', $key)): ?>
         <div class="row">
             <div class="col-sm-6">
                 <div class="well">
-                    <h4 class="title ellipsis nowrap">lava->env-><?php echo $key; ?></h4>
+                    <h4 class="title ellipsis nowrap">Lava::env()-><?php echo $key; ?></h4>
                     <div class="essense">
-<pre>
-echo $app->env-><?php echo $key; ?>;
-# <?php echo htmlspecialchars(var_export($app->env->$key, TRUE)); ?>
-</pre>
+                        <pre><?php echo htmlspecialchars(var_export(App::env()->$key, TRUE)); ?></pre>
                     </div>
                 </div>
             </div>
             <div class="col-sm-6">
                 <div class="well">
-                    <h4 class="title ellipsis nowrap">lava->env-><?php echo $key; ?>()</h4>
+                    <h4 class="title ellipsis nowrap">Lava::env()-><?php echo $key; ?>()</h4>
                     <div class="essense">
-<pre>
-var_export($app->env-><?php echo $key; ?>());
-<?php echo preg_replace('/^/m', '# ', htmlspecialchars(var_export($app->env->$key(), TRUE))); ?>
-</pre>
+                        <pre><?php echo htmlspecialchars(var_export(App::env()->$key(), TRUE)); ?></pre>
                     </div>
                 </div>
             </div>
         </div>
     <?php endif; ?>
     <div class="well">
-        <h4 class="title ellipsis nowrap">lava->env</h4>
+        <h4 class="title ellipsis nowrap"><?php echo App::dict()->tr('Environment') ?></h4>
         <div class="essense table-responsive">
             <table class="table table-striped table-condensed">
-                <?php foreach ($app->stash->env() as $key => $val): ?>
+                <?php foreach (App::env()->_data() as $key => $val): ?>
                     <tr>
                         <th>
-                            <a href="<?php echo $app->uri('env', ['key' => $key]); ?>"><?php echo htmlspecialchars($key); ?></a>
+                            <a href="<?php echo App::uri('env', ['key' => $key]); ?>"><?php echo htmlspecialchars($key); ?></a>
                         </th>
                         <td class="text-<?php echo is_string($val) ? 'muted' : 'info'; ?>">
                             <?php echo nl2br(htmlspecialchars(var_export($val, TRUE))); ?>
@@ -59,5 +50,5 @@ var_export($app->env-><?php echo $key; ?>());
     </div>
 </div>
 <?php
-    $app->template('_footer.php');
+    App::template('_footer.php');
 ?>

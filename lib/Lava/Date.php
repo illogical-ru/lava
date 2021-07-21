@@ -12,8 +12,7 @@ namespace Lava;
 
 class Date {
 
-    static
-    private $offset = [
+    private static $offset = [
         's' => 1,
         'm' => 60,
         'h' => 3600,
@@ -24,8 +23,7 @@ class Date {
     ];
 
 
-    static
-    public function time_offset ($offset) {
+    public static function time_offset ($offset) {
 
         if (   preg_match('/^([-+]?\d+)(\D)$/', $offset, $match)
             && isset     (self::$offset[$match[2]])

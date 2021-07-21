@@ -12,16 +12,19 @@ namespace Lava;
 
 class Route {
 
-    static
-    private $placeholder = [
-        ':' => '([^\/]+)',
-        '#' => '([^\/]+?)(?:\.\w*)?',
-        '*' => '(.+)',
-    ];
+    private static
+        $placeholder = [
+            ':' => '([^\/]+)',
+            '#' => '([^\/]+?)(?:\.\w*)?',
+            '*' => '(.+)',
+        ];
 
-    private $cond        = [],
-            $segs, $regexp,
-            $name, $to;
+    private
+        $cond        = [],
+        $segs,
+        $regexp,
+        $name,
+        $to;
 
 
     public function __construct ($rule, $cond = NULL) {
@@ -38,26 +41,26 @@ class Route {
         $regexp      = [];
 
         foreach ($segs as $i => $seg) {
-            if     (!  ($i      % 3)) {
+            if     (! ($i      % 3)) {
                 $regexp[] = preg_quote  ($seg, '/');
             }
-            elseif (! (($i - 1) % 3)) {
+            elseif (!(($i - 1) % 3)) {
                 $regexp[] = $placeholder[$seg];
                 unset($segs[$i]);
             }
         }
 
-        if     (! preg_match('/^\/*$/', end($segs))) {
+        if     (!preg_match('/^\/*$/', end($segs))) {
                 $regexp[] = '(?:\.\w*)?';
         }
 
         $this->segs   = array_values($segs);
         $this->regexp = sprintf('/^%s$/', join('', $regexp));
 
-        if     (  is_string($cond)) {
+        if     ( is_string($cond)) {
             $this->cond['method'] = $cond;
         }
-        elseif (  is_array ($cond)) {
+        elseif ( is_array ($cond)) {
             $this->cond           = $cond;
         }
     }
@@ -74,7 +77,7 @@ class Route {
 
     public function name () {
         if   (func_num_args()) {
-            $this->name = func_get_arg(0);
+            $this->name = func_get_arg (0);
             return $this;
         }
         else {
@@ -84,7 +87,7 @@ class Route {
 
     public function to () {
         if   (func_num_args()) {
-            $this->to = func_get_args();
+            $this->to   = func_get_args( );
             return $this;
         }
         else {
@@ -92,10 +95,19 @@ class Route {
         }
     }
 
-    public function test ($uri, $env) {
+    public function test ($uri, $env, $skip = NULL) {
+
+        if (!preg_match($this->regexp, $uri, $matches)) {
+            return;
+        }
+
+        $skip = (array)$skip;
 
         foreach ($this->cond as $key => $cond) {
-            if     (! isset($env[$key])) {
+            if     ( in_array($key, $skip)) {
+                continue;
+            }
+            elseif (!isset($env[$key])) {
                 if   (  isset($cond)) {
                     return;
                 }
@@ -103,23 +115,19 @@ class Route {
                     continue;
                 }
             }
-            elseif (  is_array($cond)) {
-                if   (! in_array($env[$key], $cond)) {
+            elseif ( is_array($cond)) {
+                if   (!in_array($env[$key], $cond)) {
                     return;
                 }
             }
-            elseif (  preg_match('/^\/.+\/[imsuxADEJSUX]*$/', $cond)) {
-                if   (! preg_match($cond, $env[$key])) {
+            elseif ( preg_match('/^\/.+\/[imsuxADEJSUX]*$/', $cond)) {
+                if   (!preg_match($cond, $env[$key])) {
                     return;
                 }
             }
-            elseif (  $cond !== $env[$key]) {
+            elseif ( $cond !== $env[$key]) {
                     return;
             }
-        }
-
-        if (! preg_match($this->regexp, $uri, $matches)) {
-            return;
         }
 
         $args = [];
@@ -133,16 +141,35 @@ class Route {
         return $args;
     }
 
-    public function uri (&$args = NULL) {
+    public function uri ($args = NULL) {
 
         $uri = [];
 
         foreach ($this->segs as $i => $seg) {
+
             $uri[] = $i & 1 && isset($args[$seg]) ? $args[$seg] : $seg;
+
             unset($args[$seg]);
         }
 
+        if ($args) {
+            $uri[] = '?' . http_build_query($args);
+        }
+
         return join('', $uri);
+    }
+
+    public function allow_methods () {
+
+        $methods = [];
+
+        if (isset($this->cond['method'])) {
+            foreach ((array)$this->cond['method'] as $name) {
+                $methods[strtoupper($name)] = TRUE;
+            }
+        }
+
+        return $methods ? array_keys($methods) : [];
     }
 }
 

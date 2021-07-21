@@ -6,68 +6,70 @@ error_reporting(E_ALL);
 
 require_once 'lib/Lava/Autoloader.php';
 
-$al  = new Lava\Autoloader;
+$al   = new Lava\Autoloader;
 
-$al->registerPrefixes([
+$al->register_prefixes([
     'Controller' => 'controllers',
 ]);
-$al->extensions      ('php');
-$al->register        ();
+$al->extensions       ('php');
+$al->register         ();
 
 // --- приложение ----------------------------------------------------------- //
 
-$app = new App (require 'conf.php');
+$conf = App::conf(require_once 'conf.php');
+
 
 // кодировка
-if (function_exists('mb_internal_encoding')) {
-    mb_internal_encoding ($app->conf->charset);
+if ($conf->charset && function_exists('mb_internal_encoding')) {
+    mb_internal_encoding     ($conf->charset);
 }
-
 // зона
-date_default_timezone_set($app->conf->timezone);
+if ($conf->timezone) {
+    date_default_timezone_set($conf->timezone);
+}
 
 // --- контроллёры ---------------------------------------------------------- //
 
 // главная страница
-$app->route()
+App ::route()
     ->name ('index')
-    ->to   ('Controller\Common', 'index');
+    ->to   ('Controller\Common');
 
 // язык
-$app->route('lang/:code')
+App ::route('lang/:code')
     ->name ('lang')
     ->to   ('Controller\Common', 'lang');
 
 // окружение
-$app->route('env/:key')
+App ::route('env/#key')
     ->name ('env')
     ->to   ('Controller\Common', 'env');
 
 // ссылки
-$app->route('link')
+App ::route('link')
     ->name ('link')
     ->to   ('Controller\Common', 'link');
 
 // рендер
-$app->route('render')
+App ::route('render')
     ->name ('render')
     ->to   ('Controller\Common', 'render');
 // рендер - фрэйм
-$app->route('render/item')
+App ::route('render/item')
     ->name ('render-item')
     ->to   ('Controller\Common', 'render_iframe');
 
 // --- 404 ------------------------------------------------------------------ //
 
-if (! $app->route_match()) {
-    $app->render([
+if (!App::routes_match()) {
+    App::render([
         'json' => ['error' => 'not-found'],
-        function($app) {
+        function() {
 
             header('HTTP/1.0 404 Not Found');
 
-            if ($app->type() == 'html') {
-                $app->template('not-found.php');
+            if (App::type() == 'html') {
+                App::template('not-found.php');
             }
         },
     ]);

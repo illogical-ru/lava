@@ -1,5 +1,8 @@
 <?php
 
+namespace App;
+
+
 class Dict {
 
     private $data;

@@ -14,8 +14,7 @@ use Lava\Stash;
 
 class Env extends Stash {
 
-    static
-    private $aliases = [
+    private static $aliases = [
 
         'server_name'     => '=localhost',
         'server_port'     => '=80',
@@ -48,7 +47,7 @@ class Env extends Stash {
             $data[$key] = $val;
 
             // accept*
-            if (! preg_match('/^http_(accept(?:|_\w+))$/', $key, $match)) {
+            if (!preg_match('/^http_(accept(?:|_\w+))$/', $key, $match)) {
                 continue;
             }
 
@@ -71,7 +70,7 @@ class Env extends Stash {
             preg_match_all('/(=)?(\S+)/', "${key} ${val}", $match);
 
             foreach ($match[2] as $i => $val) {
-                if (! $match[1][$i]) {
+                if (!$match[1][$i]) {
                     $val = isset($data[$val]) ? $data[$val] : NULL;
                 }
                 if (  isset($val)) {

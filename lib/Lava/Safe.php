@@ -12,15 +12,18 @@ namespace Lava;
 
 class Safe {
 
-    private $id   =  0,
-            $sign = '',
-            $algo = 'md5',
-            $salt = '0123456789abcdef';
+    private static
+        $id   =  0;
+
+    private
+        $algo = 'md5',
+        $sign = '',
+        $salt = '0123456789abcdef';
 
 
     public function __construct ($opts = NULL) {
 
-        foreach (['sign', 'algo', 'salt'] as $key) {
+        foreach (['algo', 'sign', 'salt'] as $key) {
             if (isset        ($opts[$key])) {
                 $this->$key = $opts[$key];
             }
@@ -33,7 +36,7 @@ class Safe {
 
 
     public function uuid () {
-        return $this->_hash(uniqid(), getmypid(), $this->id++);
+        return $this->_hash(uniqid(), getmypid(), self::$id++);
     }
     public function uuid_signed () {
 

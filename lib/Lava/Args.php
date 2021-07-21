@@ -28,10 +28,10 @@ class Args {
 
             $method = $_SERVER['REQUEST_METHOD'];
 
-            if (      isset($_SERVER['CONTENT_TYPE'])
-                &&    isset($_SERVER['CONTENT_LENGTH'])
-                &&          $_SERVER['CONTENT_LENGTH']
-                && ! (isset($data[$method]) && $data[$method])
+            if (     isset($_SERVER['CONTENT_TYPE'])
+                &&   isset($_SERVER['CONTENT_LENGTH'])
+                &&         $_SERVER['CONTENT_LENGTH']
+                && !(isset($data[$method]) && $data[$method])
             )
             {
                 $type  = strtolower($_SERVER['CONTENT_TYPE']);
@@ -64,7 +64,7 @@ class Args {
 
     public function __get ($key) {
         foreach (array_reverse($this->data) as $stash) {
-            if ($stash->_has_key($key)) {
+            if ($stash->_has  ($key)) {
                 return $stash->$key;
             }
         }
@@ -80,7 +80,7 @@ class Args {
         }
 
         foreach (array_reverse($this->data) as $stash) {
-            if ($stash->_has_key($key)) {
+            if ($stash->_has  ($key)) {
                 return $stash->$key();
             }
         }
@@ -98,7 +98,7 @@ class Args {
         }
     }
 
-    public function _get () {
+    public function _get  () {
         return $this->data['GET'];
     }
     public function _post () {
@@ -107,8 +107,8 @@ class Args {
 
     public function _query ($data, $append = FALSE) {
 
-        if (! is_array($data)) {
-            parse_str ($data, $data);
+        if (!is_array($data)) {
+            parse_str($data, $data);
         }
 
         $query = $append ? $this->_get()->_data() : [];
@@ -119,6 +119,7 @@ class Args {
 
         return http_build_query($query);
     }
+
 
     private function _normalize ($val) {
         if   (is_array($val)) {

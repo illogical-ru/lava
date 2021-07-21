@@ -1,97 +1,67 @@
 <?php
 
 use Lava\Stash;
+use App\Dict;
 
 
-class App extends Lava\App {
+class App extends Lava {
 
-    private $lang;
-
-    static
-    private $dict;
+    private static
+        $lang,
+        $dict;
 
 
     // ---------------------------------------------------------------------- //
 
-    public function start () {
+    public static function lang () {
 
-        $conf   = $this->conf;
+        if (is_null(self::$lang)) {
 
-        // языки
-        $langs  = $conf->langs();
-        // приоритет: квери, куки, браузер
-        $accept = array_unique(array_merge(
-            $this->args->_get()->lang(),
-            $this->cookie      ->lang(),
-            array_reverse($this->env->accept_language()),
-            array_keys         ($langs)
-        ));
-        // добавляем короткие формы
-        foreach (array_keys($langs) as $key) {
+            self::$lang = '';
 
-            $langs[$key] = $key;
-
-            $short = preg_replace('/-.+/', '', $key);
-
-            if (! isset($langs[$short])) {
-                $langs[$short] = $key;
+            $langs  = self::conf()->langs();
+            // приоритет: квери, куки, браузер
+            $accept = array_unique(array_merge(
+                self::args()  ->_get()->lang(),
+                self::cookie()        ->lang(),
+                array_reverse(self::env()->accept_language()),
+                array_keys   ($langs)
+            ));
+            // ищем подходящий язык
+            foreach ($accept  as  $key) {
+                if (isset($langs [$key])) {
+                    self::$lang = $key;
+                    break;
+                }
             }
         }
-        // ищем подходящий язык
-        foreach ($accept as $key) {
-            if (  isset      ($langs[$key])) {
-                $this->lang = $langs[$key];
-                break;
-            }
-        }
+
+        return self::$lang;
+    }
+    public static function lang_short () {
+        return preg_replace('/-.+/', '', self::lang());
     }
 
-    // ---------------------------------------------------------------------- //
+    public static function dict ($name = 'main', $lang = NULL) {
 
-    public function lang ($short = FALSE) {
-        return $short
-            ? preg_replace('/-.+/', '', $this->lang)
-            :                           $this->lang;
-    }
+        $name .= '/' . ($lang ? $lang : self::lang());
 
-    public function dict ($name = 'main', $lang = NULL) {
-
-        $name .= '/' . (isset($lang) ? $lang : $this->lang());
-
-        if (! isset(self::$dict[$name])) {
+        if (!isset(self::$dict[$name])) {
             self::$dict[$name] = new Dict ("dict/${name}.php");
         }
 
         return self::$dict[$name];
     }
 
-    // --- data ------------------------------------------------------------- //
-
-    public function storage ($name = 0, $opts = NULL) {
-
-        if (! $opts) {
-
-            $conf_storage = $this->conf->storage();
-
-            if (isset  ($conf_storage[$name])) {
-                $opts = $conf_storage[$name];
-            }
-        }
-
-        return Lava\Storage::source($name, $opts);
-    }
-
     // ---------------------------------------------------------------------- //
 
-    public function template ($file, $data = NULL) {
+    public static function template ($file, $data = NULL) {
 
-        $app = $this;
-
-        if (   strpos($file, '/') !== 0) {
+        if (  strpos($file, '/') !== 0) {
             $file = "templates/${file}";
         }
 
-        if (! ($data instanceof Stash)) {
+        if (!($data instanceof Stash)) {
             $data = new Stash ($data);
         }
 

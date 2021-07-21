@@ -9,15 +9,16 @@
 
 namespace Lava\Storage {
 
-    if (! extension_loaded('PDO')) {
+    if (!extension_loaded    ('PDO')) {
         throw new \Exception ('PDO is required');
     }
 
     class PDO {
 
-        private $ref,
-                $opts,
-                $error;
+        private
+            $ref,
+            $opts,
+            $error;
 
 
         public function __construct ($opts) {
@@ -79,7 +80,7 @@ namespace Lava\Storage {
         {
             $sth   = $this->_sth($query, $bind);
 
-            if (! $sth) {
+            if (!$sth) {
                 return;
             }
 
@@ -87,7 +88,7 @@ namespace Lava\Storage {
 
             $data  = $sth->fetchAll();
 
-            if (! isset($index) || $index === '') {
+            if (is_null($index) || $index === '') {
                 return $data;
             }
 
@@ -176,15 +177,16 @@ namespace Lava\Storage\PDO {
 
     class Factory {
 
-        private $storage,
-                $target   = [],
-                $columns  = [],
-                $join     = [],
-                $filter,
-                $group_by = [],
-                $having,
-                $order_by = [],
-                $limit    = [];
+        private
+            $storage,
+            $target   = [],
+            $columns  = [],
+            $join     = [],
+            $filter,
+            $group_by = [],
+            $having,
+            $order_by = [],
+            $limit    = [];
 
 
         public function __construct (
@@ -489,8 +491,7 @@ namespace Lava\Storage\PDO {
         }
 
 
-        static
-        public function escape_key ($key) {
+        public static function escape_key ($key) {
 
             if (preg_match(
                 '/^([^\W\d]\w*)(?:\.([^\W\d]\w*|\*))?$/',
@@ -591,8 +592,9 @@ namespace Lava\Storage\PDO\Factory {
 
     class Filter {
 
-        private $context,
-                $stack = [];
+        private
+            $context,
+            $stack = [];
 
 
         public function __construct ($context) {

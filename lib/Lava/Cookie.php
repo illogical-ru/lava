@@ -9,20 +9,21 @@
 
 namespace Lava;
 
-use Lava\Stash;
 use Lava\Date;
 
 
-class Cookie extends Stash {
+class Cookie {
 
-    public function __construct () {
-        parent::__construct($_COOKIE);
+    public function __get           ($key) {
+        if (isset          ($_COOKIE[$key])) {
+            return is_array($_COOKIE[$key])
+                ?  end     ($_COOKIE[$key])
+                :           $_COOKIE[$key];
+        }
     }
-
-
     public function __set ($key, $val) {
 
-        $data = $this->_normalize($key, $val);
+        $data = self::_normalize($key, $val);
         $opts = array_slice(func_get_args(), 2);
 
         // expire
@@ -33,7 +34,7 @@ class Cookie extends Stash {
         $done = 0;
 
         foreach ($data as $item) {
-            $done += call_user_func_array(
+            $done   += call_user_func_array(
                 'setcookie', array_merge($item, $opts)
             );
         }
@@ -42,35 +43,49 @@ class Cookie extends Stash {
     }
 
     public function __call ($key, $args) {
-        if   ($args) {
+        if     ($args) {
             return call_user_func_array(
                 [$this, '__set'], array_merge([$key], $args)
             );
         }
-        else {
-            return parent::__call($key, $args);
-        }
-    }
-
-    public function __unset ($key) {
-
-        $data = $this->_data();
-
-        if     (! isset   ($data[$key])) {
-            return;
-        }
-        elseif (  is_array($data[$key])) {
-            array_walk_recursive(
-                $data[$key], function(&$item) {$item = NULL;}
-            );
-            $this->$key = $data[$key];
+        elseif (isset    ($_COOKIE[$key])) {
+            return (array)$_COOKIE[$key];
         }
         else   {
-            $this->$key = NULL;
+            return [];
         }
     }
 
-    private function _normalize ($key, $val) {
+    public function __isset ($key) {
+        return isset   ($_COOKIE[$key]);
+    }
+    public function __unset ($key) {
+
+        if   (!isset   ($_COOKIE[$key])) {
+            return;
+        }
+
+        if   ( is_array($_COOKIE[$key])) {
+
+            $data = $_COOKIE[$key];
+
+            array_walk_recursive(
+                $data, function(&$item) {$item = NULL;}
+            );
+        }
+        else {
+            $data = NULL;
+        }
+
+        self::$key($data);
+    }
+
+    public function _data () {
+        return $_COOKIE;
+    }
+
+
+    private static function _normalize ($key, $val) {
         if   (is_array($val)) {
 
             $data = [];
@@ -78,7 +93,7 @@ class Cookie extends Stash {
             foreach ($val as $index => $item) {
                 $data = array_merge(
                     $data,
-                    $this->_normalize("${key}[${index}]", $item)
+                    self::_normalize("${key}[${index}]", $item)
                 );
             }
 
