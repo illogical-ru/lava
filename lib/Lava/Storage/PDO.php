@@ -150,13 +150,15 @@ namespace Lava\Storage {
                 elseif (is_int   ($val)) {
                     $type = \PDO::PARAM_INT;
                 }
-                elseif (is_string($val)) {
+                elseif (is_string($val)
+                    ||  is_float ($val)
+                )
+                {
                     $type = \PDO::PARAM_STR;
                 }
                 else   {
                     throw new \Exception (sprintf(
-                        "Bad bind variable '%s'",
-                                            gettype($val)
+                        "Bad bind variable '%s'", gettype($val)
                     ));
                 }
 
