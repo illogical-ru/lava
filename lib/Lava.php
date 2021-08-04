@@ -137,7 +137,13 @@ class Lava {
 
     public static function uri ($uri = NULL, $data = NULL, $append = FALSE) {
 
-        if   (isset($uri)) {
+        if     (is_null($uri)) {
+            $uri   = self::env()->uri;
+        }
+        elseif (preg_match('|^(?:[a-z]+:)?//[^/]+(.*)|i', $uri, $match)) {
+            $uri   = $match[1] ? $match[1] : '/';
+        }
+        else   {
 
             $route = self::route_by_name($uri);
 
@@ -148,9 +154,6 @@ class Lava {
             elseif (strpos($uri, '/') !== 0) {
                 $uri  = rtrim(self::env()->uri, '/') . '/' . $uri;
             }
-        }
-        else {
-            $uri   = self::env()->uri;
         }
 
         if   ($data || $append) {
@@ -167,16 +170,19 @@ class Lava {
 
     public static function url () {
 
-        $args      = func_get_args();
+        $args = func_get_args();
 
-        $subdomain = key_exists(3, $args) ? $args[3] : TRUE;
-        $url       = call_user_func_array([__CLASS__, 'uri'], $args);
-
-        if (! preg_match('|^[a-z]+://|i', $url)) {
-            $url   = App::host(TRUE, $subdomain) . $url;
+        if   ( isset($args[0])
+            && preg_match('|^([a-z]+:)?(//[^/]+)|i', $args[0], $match)
+        )
+        {
+            $host = $match[1] ? $match[0] : 'http:' . $match[2];
+        }
+        else {
+            $host = App::host(TRUE, key_exists(3, $args) ? $args[3] : TRUE);
         }
 
-        return $url;
+        return $host . call_user_func_array([__CLASS__, 'uri'], $args);
     }
 
     public static function url_ref_or () {
