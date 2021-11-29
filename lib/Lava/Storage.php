@@ -15,7 +15,11 @@ class Storage {
     private static $source = [];
 
 
-    public static function source ($name = NULL, array $opts = NULL) {
+    public static function source ($name = NULL, $opts = NULL) {
+
+        if (      $opts) {
+            ksort($opts);
+        }
 
         $source = NULL;
         $hash   = md5(serialize($opts));
@@ -37,8 +41,8 @@ class Storage {
 
             $class  = __CLASS__ . '\\' . $opts['driver'];
             $source = [
-                'class' => new $class ($opts),
-                'hash'  =>     $hash,
+                'obj'  => new $class ($opts),
+                'hash' =>     $hash,
             ];
 
             self::$source[$name] = $source;
@@ -48,7 +52,7 @@ class Storage {
             throw new \Exception("Can't find storage '${name}'");
         }
 
-        return $source['class'];
+        return $source['obj'];
     }
 }
 
