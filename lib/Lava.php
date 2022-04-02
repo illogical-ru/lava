@@ -294,6 +294,8 @@ class Lava {
                 $to      = [new $class, $method];
             }
 
+            self::env()->route_name = $route->name();
+
             $result = call_user_func_array($to, $args);
 
             if   ( $result !== FALSE) {

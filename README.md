@@ -1,4 +1,4 @@
-lava-php
+lava
 ========
 
 Micro-Framework

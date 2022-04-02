@@ -1,4 +1,9 @@
 <?php
+
+    if (!class_exists('App')) {
+        exit;
+    }
+
     App::template('_header.php');
 ?>
 <div id="index" class="container">
@@ -29,7 +34,7 @@ Lava::conf(<?php echo htmlspecialchars(var_export(App::conf()->_data(), TRUE)); 
                             <a href="<?php echo App::uri('env', ['key' => 'uri']); ?>">ENV</a>
                         </li>
                         <li>
-                            <a href="<?php echo htmlspecialchars(App::uri('link', ['key_3' => 1, 'page' => 1])); ?>"><?php echo App::dict()->tr('Links'); ?></a>
+                            <a href="<?php echo htmlspecialchars(App::uri('links', ['key_3' => 1, 'page' => 1])); ?>"><?php echo App::dict()->tr('Links'); ?></a>
                         </li>
                         <li>
                             <a href="<?php echo App::uri('render'); ?>"><?php echo App::dict()->tr('Render'); ?></a>

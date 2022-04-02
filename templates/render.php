@@ -1,13 +1,12 @@
 <?php
+
+    if (!class_exists('App')) {
+        exit;
+    }
+
     App::template('_header.php', ['title' => App::dict()->tr('Render')]);
 ?>
 <div id="render" class="container">
-    <div id="control">
-        <a href="<?php echo App::uri('index'); ?>">
-            <i class="fa fa-chevron-left" aria-hidden="true"></i>
-            <?php echo App::dict()->tr('To Home Page'); ?>
-        </a>
-    </div>
     <div class="well">
         <h4 class="title ellipsis nowrap">App::render(handlers) : has_handler</h4>
         <div class="essense">

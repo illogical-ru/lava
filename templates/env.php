@@ -1,16 +1,14 @@
 <?php
 
+    if (!class_exists('App')) {
+        exit;
+    }
+
     $key = $data->key;
 
     App::template('_header.php', ['title' => App::dict()->tr('Environment')]);
 ?>
 <div id="env" class="container">
-    <div id="control">
-        <a href="<?php echo App::uri('index'); ?>">
-            <i class="fa fa-chevron-left" aria-hidden="true"></i>
-            <?php echo App::dict()->tr('To Home Page'); ?>
-        </a>
-    </div>
     <?php if (preg_match('/^\w+$/', $key)): ?>
         <div class="row">
             <div class="col-sm-6">

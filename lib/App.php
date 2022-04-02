@@ -67,6 +67,12 @@ class App extends Lava {
 
         return include $file;
     }
+
+    // ---------------------------------------------------------------------- //
+
+    public static function current_route_name () {
+        return self::env()->route_name;
+    }
 }
 
 ?>

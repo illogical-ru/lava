@@ -1,13 +1,12 @@
 <?php
+
+    if (!class_exists('App')) {
+        exit;
+    }
+
     App::template('_header.php', ['title' => App::dict()->tr('Links')]);
 ?>
-<div id="link" class="container">
-    <div id="control">
-        <a href="<?php echo App::uri('index'); ?>">
-            <i class="fa fa-chevron-left" aria-hidden="true"></i>
-            <?php echo App::dict()->tr('To Home Page'); ?>
-        </a>
-    </div>
+<div id="links" class="container">
     <div class="well">
         <h4 class="title ellipsis nowrap">Lava::uri(NULL, data, TRUE) : uri</h4>
         <div class="essense">
@@ -148,6 +147,4 @@ echo Lava::pub('js/main.js');
         </div>
     </div>
 </div>
-<?php
-    App::template('_footer.php');
-?>
+<?php App::template('_footer.php'); ?>

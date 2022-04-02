@@ -28,9 +28,9 @@ class Common {
         }]);
     }
 
-    public function link () {
+    public function links () {
         App::render(['html' => function() {
-            App::template('link.php');
+            App::template('links.php');
         }]);
     }
 

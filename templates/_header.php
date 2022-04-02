@@ -1,3 +1,9 @@
+<?php
+
+    if (!class_exists('App')) {
+        exit;
+    }
+?>
 <!DOCTYPE html>
 <html lang="<?php echo App::lang_short(); ?>">
 <head>
@@ -14,3 +20,28 @@
 </head>
 <body>
     <div id="content">
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                        <span class="sr-only"><?php echo App::dict()->tr('Navigation'); ?></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="<?php echo App::uri('index'); ?>" class="navbar-brand">Lava</a>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-collapse">
+                    <?php if (App::current_route_name() != 'index'): ?>
+                        <ul class="nav navbar-nav">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                    <?php echo App::dict()->tr('Useful'); ?> <span class="caret"></span>
+                                </a>
+                                <?php App::template('_useful.php', ['class' => 'dropdown-menu']); ?>
+                            </li>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </nav>

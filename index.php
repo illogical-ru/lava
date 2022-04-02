@@ -2,7 +2,7 @@
 
 error_reporting(E_ALL);
 
-// --- автолоадер ----------------------------------------------------------- //
+// --- Autoloader ----------------------------------------------------------- //
 
 require_once 'lib/Lava/Autoloader.php';
 
@@ -14,47 +14,39 @@ $al->register_prefixes([
 $al->extensions       ('php');
 $al->register         ();
 
-// --- приложение ----------------------------------------------------------- //
+// --- Conf ----------------------------------------------------------------- //
 
 $conf = App::conf(require_once 'conf.php');
 
 
-// кодировка
 if ($conf->charset && function_exists('mb_internal_encoding')) {
     mb_internal_encoding     ($conf->charset);
 }
-// зона
 if ($conf->timezone) {
     date_default_timezone_set($conf->timezone);
 }
 
-// --- контроллёры ---------------------------------------------------------- //
+// --- Controllers ---------------------------------------------------------- //
 
-// главная страница
 App ::route()
     ->name ('index')
     ->to   ('Controller\Common');
 
-// язык
 App ::route('lang/:code')
     ->name ('lang')
     ->to   ('Controller\Common', 'lang');
 
-// окружение
 App ::route('env/#key')
     ->name ('env')
     ->to   ('Controller\Common', 'env');
 
-// ссылки
-App ::route('link')
-    ->name ('link')
-    ->to   ('Controller\Common', 'link');
+App ::route('links')
+    ->name ('links')
+    ->to   ('Controller\Common', 'links');
 
-// рендер
 App ::route('render')
     ->name ('render')
     ->to   ('Controller\Common', 'render');
-// рендер - фрэйм
 App ::route('render/item')
     ->name ('render-item')
     ->to   ('Controller\Common', 'render_iframe');

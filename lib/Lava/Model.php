@@ -115,16 +115,16 @@ class Model {
         $class = self::classname();
 
         return isset($class::$columns[$key]['unique'])
-                &&   $class::$columns[$key]['unique']
-                ||   $class::id() ==  $key;
+                ?    $class::$columns[$key]['unique']
+                :    $class::id() ==  $key;
     }
     public static function column_is_not_null ($key) {
 
         $class = self::classname();
 
-        return isset($class::$columns[$key]['not_null'])
-                ?    $class::$columns[$key]['not_null']
-                :    $class::id() ==  $key;
+        if (isset ($class::$columns[$key]['not_null'])) {
+            return $class::$columns[$key]['not_null'];
+        }
     }
     public static function column_is_valid    ($key, $val) {
 

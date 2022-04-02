@@ -1,3 +1,9 @@
+<?php
+
+    if (!class_exists('App')) {
+        exit;
+    }
+?>
     </div>
     <footer>
         <div class="container">
@@ -9,13 +15,18 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="langs-dropdown">
                     <?php foreach (App::conf()->langs() as $code => $lang): ?>
-                        <li class="<?php echo $code == App::lang() ? 'active' : ''; ?>"><a href="<?php echo App::uri('lang', ['code' => $code]); ?>" rel="nofollow"><?php echo $lang; ?></a></li>
+                        <li class="<?php echo $code == App::lang() ? 'active' : ''; ?>">
+                            <a href="<?php echo App::uri('lang', ['code' => $code]); ?>" rel="nofollow"><?php echo $lang; ?></a>
+                        </li>
                     <?php endforeach; ?>
                 </ul>
             </div>
             <div class="small">
                 <i class="fa fa-github" aria-hidden="true"></i>
-                <a href="https://github.com/illogical-ru/lava-php" class="text-muted"><?php echo App::dict()->tr('Powered by'); ?> Lava</a><br>
+                <a href="https://github.com/illogical-ru/lava" class="text-muted">
+                    <?php echo App::dict()->tr('Powered by'); ?> Lava
+                </a>
+                <br />
             </div>
         </div>
     </footer>
