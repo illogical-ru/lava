@@ -3,19 +3,14 @@ lava
 
 Micro-Framework
 
-Требования: PHP 5.4+, 7+
+Требования: PHP 5.4+
 
 
-## Автолоадер
+## Установка
 
 
-### new Lava\Autoloader : autoloader
-
-```php
-require_once 'lib/Lava/Autoloader.php';
-
-$al = new Lava\Autoloader;
-$al->register();
+```bash
+composer require illogical/lava
 ```
 
 

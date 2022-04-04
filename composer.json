@@ -1,0 +1,22 @@
+{
+    "name": "illogical/lava",
+    "type": "library",
+    "description": "A PHP micro-framework ",
+    "keywords": ["framework","micro"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "inx",
+            "email": "inx@illogical.ru"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lava\\": "Lava"
+        }
+    }
+}
