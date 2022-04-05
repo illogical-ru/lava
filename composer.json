@@ -18,7 +18,5 @@
         "psr-4": {
             "Lava\\": "Lava"
         }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": false
+    }
 }
