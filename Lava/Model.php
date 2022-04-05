@@ -72,7 +72,7 @@ class Model {
 
         $class = self::classname();
 
-        return \Lava::storage($class::$storage);
+        return \Lava\App::storage($class::$storage);
     }
 
     public static function table () {
