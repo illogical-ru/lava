@@ -1,4 +1,4 @@
-lava
+Lava
 ========
 
 Micro-Framework
@@ -8,10 +8,21 @@ Micro-Framework
 
 ## Установка
 
+Если используете [Composer](https://getcomposer.org/) то выполните команду
 
 ```bash
 composer require illogical/lava
 ```
+
+Или можете [скачать архив](https://github.com/illogical-ru/lava/archive/master.zip), распаковать и подключить автолоадер
+
+```php
+require_once '.../Lava/Autoloader.php';
+
+$al = new Lava\Autoloader;
+$al->register();
+```
+
 
 
 ## Окружение
