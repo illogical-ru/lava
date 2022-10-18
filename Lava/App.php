@@ -109,14 +109,14 @@ class App {
 
     public static function host ($scheme = NULL, $subdomain = NULL) {
 
-        $host = self::conf()->host && $subdomain !== TRUE
+        $host = self::conf()->host
             ?   self::conf()->host
             :   self::env ()->host;
 
         if ($scheme === TRUE) {
             $scheme = self::env()->is_https ? 'https' : 'http';
         }
-        if ($subdomain && $subdomain !== TRUE) {
+        if ($subdomain) {
             $host   = join('.', array_merge((array)$subdomain, [$host]));
         }
         if ($scheme) {
@@ -137,9 +137,15 @@ class App {
 
     public static function pub ($path = NULL) {
 
-        $pub  = self::conf()->pub
-            ?   self::conf()->pub
-            :   preg_replace('|/[^/]*$|', '', self::env()->script);
+        if     (self::conf()->pub) {
+            $pub = self::conf()->pub;
+        }
+        elseif (self::env()->is_rewrite) {
+            $pub = preg_replace('|/[^/]*$|', '', self::env()->script);
+        }
+        else   {
+            $pub = NULL;
+        }
 
         return join('/', array_merge([$pub], (array)$path));
     }
@@ -188,7 +194,7 @@ class App {
             $host = $match[1] ? $match[0] : 'http:' . $match[2];
         }
         else {
-            $host = App::host(TRUE, key_exists(3, $args) ? $args[3] : TRUE);
+            $host = self::host(TRUE, key_exists(3, $args) ? $args[3] : NULL);
         }
 
         return $host . call_user_func_array([__CLASS__, 'uri'], $args);
