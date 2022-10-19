@@ -732,7 +732,7 @@ $data = $storage
     ->filter_like('email', '%@mail%')
     ->min('id');
 # query: SELECT MIN(`id`) AS `val` FROM `users` WHERE `email` LIKE ?
-# bind:  %@mail%'
+# bind:  '%@mail%'
 ```
 
 #### factory->max(key) : value
