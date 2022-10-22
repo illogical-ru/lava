@@ -147,7 +147,9 @@ class App {
             $pub = NULL;
         }
 
-        return join('/', array_merge([$pub], (array)$path));
+        return preg_replace(
+            '|/+|', '/', join('/', array_merge([$pub], (array)$path))
+        );
     }
 
     public static function uri ($uri = NULL, $data = NULL, $append = FALSE) {
