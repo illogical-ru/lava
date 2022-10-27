@@ -249,7 +249,7 @@ class App {
             }
         }
     }
-    public static function routes_allow_methods () {
+    public static function routes_allow_methods ($skip = 'method') {
 
         $uri     = self::env()-> uri;
         $env     = self::env()->_data();
@@ -257,7 +257,7 @@ class App {
         $has     = FALSE;
 
         foreach (self::$routes as $route) {
-            if ($route->test($uri, $env, 'method') !== NULL) {
+            if ($route->test($uri, $env, $skip) !== NULL) {
 
                 foreach ($route->allow_methods() as $name) {
                     $methods[$name] = TRUE;
