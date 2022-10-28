@@ -291,7 +291,9 @@ class App {
 
                 $target  = array_shift($to);
                 $is_file = preg_match ('/[^\\\\\w]/', $target);
-                $method  = $to ? array_pop($to) : 'index';
+                $method  = $to
+                    ? array_pop ($to)
+                    : strtolower($env['method']);
 
                 if     ($is_file) {
                     require_once $target;
