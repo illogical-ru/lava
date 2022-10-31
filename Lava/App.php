@@ -249,12 +249,13 @@ class App {
             }
         }
     }
-    public static function routes_allow_methods ($skip = 'method') {
+    public static function routes_allow_methods ($skip = NULL) {
 
         $uri     = self::env()-> uri;
         $env     = self::env()->_data();
         $methods = [];
         $has     = FALSE;
+        $skip    = array_merge((array)$skip, ['method']);
 
         foreach (self::$routes as $route) {
             if ($route->test($uri, $env, $skip) !== NULL) {
