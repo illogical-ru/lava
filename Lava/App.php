@@ -272,9 +272,9 @@ class App {
     }
     public static function routes_match () {
 
-        $uri  = self::env()-> uri;
-        $env  = self::env()->_data();
-        $done = 0;
+        $uri    = self::env()-> uri;
+        $env    = self::env()->_data();
+        $result = FALSE;
 
         foreach (self::$routes as $route) {
 
@@ -318,15 +318,12 @@ class App {
 
             $result = call_user_func_array($to, $args);
 
-            if   ( $result !== FALSE) {
-                $done++;
-            }
             if   ( $result !== TRUE) {
                 break;
             }
         }
 
-        return $done;
+        return $result;
     }
 
     public static function render ($handler) {
