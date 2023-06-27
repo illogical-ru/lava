@@ -9,6 +9,8 @@
 
 namespace Lava;
 
+use Lava\App;
+
 
 class Model {
 
@@ -72,7 +74,7 @@ class Model {
 
         $class = self::classname();
 
-        return \Lava\App::storage($class::$storage);
+        return App::storage($class::$storage);
     }
 
     public static function table () {
@@ -185,16 +187,10 @@ class Model {
         return $this->data;
     }
 
-    public function has_one  ($class, $fk = NULL) {
-
-        if (!$fk) {
-            $fk = self::_fk($class);
-        }
-        if ( isset($this->data[$fk])) {
-            return $class::one($this->data[$fk]);
-        }
+    public function has_one    ($class, $fk = NULL) {
+        return self::has_many  ($class, $fk)->one();
     }
-    public function has_many ($class, $fk = NULL) {
+    public function has_many   ($class, $fk = NULL) {
 
         if (!$fk) {
             $fk = self::_fk($this::classname());
@@ -202,7 +198,16 @@ class Model {
 
         return $class::find([$fk => $this->id]);
     }
+    public function belongs_to ($class, $fk = NULL) {
 
+        if (!$fk) {
+            $fk = self::_fk($class);
+        }
+
+        if ( isset($this->data[$fk])) {
+            return $class::one($this->data[$fk]);
+        }
+    }
 
     protected static function _fk ($class) {
         return (
