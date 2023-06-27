@@ -202,23 +202,6 @@ class App {
         return $host . call_user_func_array([__CLASS__, 'uri'], $args);
     }
 
-    public static function url_ref_or () {
-
-        $env = self::env();
-
-        if   (  preg_match(
-                    '|^[a-z]+://([^/]+)([^?]*)|i', $env->referer, $match
-                )
-            && (strcasecmp($env->host, $match[1]) || $env->uri != $match[2])
-        )
-        {
-            return $env->referer;
-        }
-        else {
-            return call_user_func_array([__CLASS__, 'url'], func_get_args());
-        }
-    }
-
     public static function redirect () {
 
         $location = call_user_func_array([__CLASS__, 'url'], func_get_args());
