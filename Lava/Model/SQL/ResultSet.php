@@ -24,6 +24,11 @@ class ResultSet {
         $this->factory = $class::storage()->factory($class::table());
     }
 
+    public function __invoke () {
+        $factory = $this->factory;
+        return           $factory();
+    }
+
 
     public function one () {
 
@@ -106,11 +111,16 @@ class ResultSet {
         }
         elseif (is_array   ($data)) {
             foreach ($data as $key => $val) {
-                $this->factory->filter($key, $val);
+
+                $filter_name = is_array($val)
+                    ? 'filter_in'
+                    : 'filter_eq';
+
+                $this->factory->$filter_name($key, $val);
             }
         }
         elseif (is_callable($data)) {
-            $this->factory->filter    ($data);
+            $this->factory->filter($data);
         }
 
         return $this;

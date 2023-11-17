@@ -83,7 +83,7 @@ class Model {
 
         return $class::$table
             ?  $class::$table
-            :  self::_camel2snake(preg_replace('/.*\\\/', '', $class));
+            :  $class::_class2snake() . 's';
     }
 
     public static function id () {
@@ -196,7 +196,7 @@ class Model {
             $fk = self::_fk($this::classname());
         }
 
-        return $class::find([$fk => $this->id]);
+        return $class::find([$fk => $this->index]);
     }
     public function belongs_to ($class, $fk = NULL) {
 
@@ -209,16 +209,22 @@ class Model {
         }
     }
 
+
     protected static function _fk ($class) {
-        return (
-              strtolower(preg_replace('|.*\\\|', '', $class))
-            . '_'
-            . $class::id()
-        );
+
+        $fk = $class::id();
+
+        if ($fk == 'id') {
+            $fk = $class::_class2snake() . '_' . $fk;
+        }
+
+        return $fk;
     }
 
-    protected static function _camel2snake ($val) {
-        return strtolower(preg_replace('/\B(?=[A-Z])/', '_', $val));
+    protected static function _class2snake () {
+        return strtolower(preg_replace(
+            ['/.*\\\/', '/\B(?=[A-Z])/'], ['', '_'], self::classname()
+        ));
     }
 }
 
