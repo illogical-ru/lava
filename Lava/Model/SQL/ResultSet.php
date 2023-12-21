@@ -24,9 +24,9 @@ class ResultSet {
         $this->factory = $class::storage()->factory($class::table());
     }
 
-    public function __invoke () {
+    public function __invoke ($columns = NULL) {
         $factory = $this->factory;
-        return           $factory();
+        return $factory($columns);
     }
 
 
@@ -39,7 +39,7 @@ class ResultSet {
         }
     }
 
-    public function collect ($limit = 0, $page = 1) {
+    public function get ($limit = 0, $page = 1) {
 
         $class = $this->class;
         $count = 0;
@@ -47,32 +47,24 @@ class ResultSet {
 
         if ( func_num_args()) {
 
-            if     ($limit < 1) {
-                $limit = 1;
+            $limit = (int)$limit;
+            $page  = (int)$page;
+
+            if ($limit < 1 || $page < 1) {
+                return;
             }
-            elseif ($limit > $class::limit()) {
+            if ($class::limit() && $limit > $class::limit()) {
                 $limit = $class::limit();
-            }
-            else   {
-                $limit = (int)$limit;
             }
 
             $count = $this->count();
             $pages = (int)  ceil ($count / $limit);
 
-            if     ($page < 1) {
-                $page  = 1;
-            }
-            elseif ($page > $pages) {
-                $page  = $pages;
-            }
-            else   {
-                $page  = (int)$page;
+            if ($page > $pages) {
+                return;
             }
 
-            $this->factory->limit(
-                $limit, ($page - 1) * $limit
-            );
+            $this->factory->limit($limit, ($page - 1) * $limit);
         }
 
         $data  = $this->factory->get($class::id());
@@ -81,11 +73,12 @@ class ResultSet {
             return;
         }
 
-        foreach ($data   as    &$item) {
+        foreach ($data as &$item) {
             $item = new $class ($item);
         }
 
         return new Collection ($data, [
+            'class' => $class,
             'limit' => $limit,
             'count' => $count ? $count : count($data),
             'pages' => $pages,

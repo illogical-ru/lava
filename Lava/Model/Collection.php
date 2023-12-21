@@ -10,41 +10,34 @@
 namespace Lava\Model;
 
 
-class Collection implements \Iterator {
+class Collection extends \ArrayIterator {
 
-    private
-        $data,
-        $attr;
-
-
-    public function __construct (array $data, $attr = []) {
-        $this->data = $data;
-        $this->attr = $attr;
-    }
+    public
+        $class,
+        $limit,
+        $count,
+        $pages,
+        $page;
 
 
-    public function current () {
-        return current($this->data);
+    public function __construct ($data, $attr = []) {
+
+        parent::__construct($data);
+
+        foreach ($attr as $key => $val) {
+            if (property_exists($this, $key)) {
+                $this->$key = $val;
+            }
+        }
     }
-    public function key     () {
-        return key    ($this->data);
-    }
-    public function next    () {
-        next          ($this->data);
-    }
-    public function rewind  () {
-        reset         ($this->data);
-    }
-    public function valid   () {
-        return key    ($this->data);
-    }
+
 
     public function as_array () {
 
         $data = [];
 
-        foreach ($this->data as $val) {
-            $data[] = $val->as_array();
+        foreach ($this as $key => $val) {
+            $data[$key] = $val->as_array();
         }
 
         return $data;

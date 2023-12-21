@@ -19,12 +19,13 @@ class Model {
         $table,
         $id      = 'id',
         $columns = [],
-        $limit   = 100;
+        $limit   = 0;
 
     protected
         $index,
         $data    = [],
-        $old     = [];
+        $old     = [],
+        $rels    = [];
 
 
     public function __construct (array $data = []) {
@@ -50,8 +51,29 @@ class Model {
     }
 
     public function __get ($key) {
-        if ( isset($this->data[$key])) {
+
+        if (isset ($this->data[$key])) {
             return $this->data[$key];
+        }
+
+        if (key_exists($key, $this->rels)) {
+            return $this->rels[$key];
+        }
+        if (method_exists($this, $key)) {
+
+            $rs     = $this->$key();
+
+            if (!isset($this->rels[$key])) {
+                return;
+            }
+
+            $method = $this->rels[$key];
+
+            $this->rels[$key] = method_exists($rs, $method)
+                ? $rs->$method()
+                : NULL;
+
+            return $this->rels[$key];
         }
     }
     public function __set ($key, $val) {
@@ -188,9 +210,18 @@ class Model {
     }
 
     public function has_one    ($class, $fk = NULL) {
-        return self::has_many  ($class, $fk)->one();
+
+        self::_set_rel_method('one');
+
+        if (!$fk) {
+            $fk = self::_fk($this::classname());
+        }
+
+        return $class::find([$fk => $this->index]);
     }
     public function has_many   ($class, $fk = NULL) {
+
+        self::_set_rel_method('get');
 
         if (!$fk) {
             $fk = self::_fk($this::classname());
@@ -200,13 +231,17 @@ class Model {
     }
     public function belongs_to ($class, $fk = NULL) {
 
+        self::_set_rel_method('one');
+
         if (!$fk) {
             $fk = self::_fk($class);
         }
 
-        if ( isset($this->data[$fk])) {
-            return $class::one($this->data[$fk]);
-        }
+        return $class::find([
+            $fk => isset($this->data[$fk])
+                    ?    $this->data[$fk]
+                    :    NULL
+        ]);
     }
 
 
@@ -225,6 +260,20 @@ class Model {
         return strtolower(preg_replace(
             ['/.*\\\/', '/\B(?=[A-Z])/'], ['', '_'], self::classname()
         ));
+    }
+
+    private static function _set_rel_method ($name) {
+        foreach (debug_backtrace() as $frame) {
+            if (   isset($frame['class'])
+                && isset($frame['object'])
+                &&       $frame['class']    ==  __CLASS__
+                &&       $frame['function'] == '__get'
+            )
+            {
+                $frame['object']->rels[$frame['args'][0]] = $name;
+                break;
+            }
+        }
     }
 }
 
