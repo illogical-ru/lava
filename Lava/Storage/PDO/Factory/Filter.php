@@ -81,7 +81,7 @@ class Filter {
 
                 if     ($val instanceof Factory) {
                     $val      = $val();
-                    $expr     = "(${val['query']})";
+                    $expr     = "({$val['query']})";
                     $val      = $val['bind'];
                 }
                 elseif ($operator == 'in' || $operator == 'not in') {
@@ -111,13 +111,13 @@ class Filter {
 
         $count   = count($query);
         $context = $this->context == 'not' ? 'and' : $this->context;
-        $query   = join (strtoupper(" ${context} "), $query);
+        $query   = join (strtoupper(" {$context} "), $query);
 
         if ($count > 1) {
-            $query =    "(${query})";
+            $query =    "({$query})";
         }
         if ($query && $this->context == 'not') {
-            $query = "NOT ${query}";
+            $query = "NOT {$query}";
         }
 
         return [

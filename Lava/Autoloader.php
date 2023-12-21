@@ -114,8 +114,8 @@ class Autoloader {
             $file = $path . $separator . $class_path;
 
             foreach ($this->extensions as $ext) {
-                if (file_exists("${file}.${ext}")) {
-                    return      "${file}.${ext}";
+                if (file_exists("{$file}.{$ext}")) {
+                    return      "{$file}.{$ext}";
                 }
             }
         }

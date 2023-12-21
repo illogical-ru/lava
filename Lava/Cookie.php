@@ -93,7 +93,7 @@ class Cookie {
             foreach ($val as $index => $item) {
                 $data = array_merge(
                     $data,
-                    self::_normalize("${key}[${index}]", $item)
+                    self::_normalize("{$key}[{$index}]", $item)
                 );
             }
 

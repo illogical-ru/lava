@@ -231,7 +231,7 @@ class Factory {
             $columns = $this->_expr($this->columns);
 
             if ($columns['query']) {
-                $query[] = "(${columns['query']})";
+                $query[] = "({$columns['query']})";
                 $bind    = array_merge($bind, $columns['bind']);
             }
 
@@ -370,7 +370,7 @@ class Factory {
             if   ($expr instanceof self) {
                 $expr  = $expr();
                 $bind  = array_merge($bind, $expr['bind']);
-                $expr  = "(${expr['query']})";
+                $expr  = "({$expr['query']})";
             }
             else {
                 $expr  = $this->escape_key($expr);
@@ -403,11 +403,11 @@ class Factory {
             }
             elseif ($expr instanceof self) {
                 $expr    = $expr();
-                $query[] = "${key} = (${expr['query']})";
+                $query[] = "{$key} = ({$expr['query']})";
                 $bind    = array_merge($bind, $expr['bind']);
             }
             else   {
-                $query[] = "${key} = ?";
+                $query[] = "{$key} = ?";
                 $bind [] = $expr;
             }
         }
@@ -421,7 +421,7 @@ class Factory {
     private function _aggregate ($func, $key) {
 
         $select = $this(['val' => sprintf(
-            "${func}(%s)", $this->escape_key($key)
+            "{$func}(%s)", $this->escape_key($key)
         )]);
         $data   = $this->storage->fetch(
             $select['query'], $select['bind']

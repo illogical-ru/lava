@@ -140,7 +140,7 @@ class PDO {
 
         foreach ((array)$bind as $key => $val) {
 
-            $key =  is_int ($key) ? $key + 1 : ":${key}";
+            $key =  is_int ($key) ? $key + 1 : ":{$key}";
 
             if     (is_null  ($val)) {
                 $type = \PDO::PARAM_NULL;

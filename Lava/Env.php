@@ -67,7 +67,7 @@ class Env extends Stash {
 
         foreach (self::$aliases as $key => $val) {
 
-            preg_match_all('/(=)?(\S+)/', "${key} ${val}", $match);
+            preg_match_all('/(=)?(\S+)/', "{$key} {$val}", $match);
 
             foreach ($match[2] as $i => $val) {
                 if (!$match[1][$i]) {

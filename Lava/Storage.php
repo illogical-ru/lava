@@ -49,7 +49,7 @@ class Storage {
         }
 
         if (!$source) {
-            throw new \Exception("Can't find storage '${name}'");
+            throw new \Exception("Can't find storage '{$name}'");
         }
 
         return $source['obj'];

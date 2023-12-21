@@ -120,7 +120,7 @@ class App {
             $host   = join('.', array_merge((array)$subdomain, [$host]));
         }
         if ($scheme) {
-            $host   = "${scheme}://${host}";
+            $host   = "{$scheme}://{$host}";
         }
 
         return $host;
@@ -342,7 +342,7 @@ class App {
                 $content_type = self::$types[0];
             }
 
-            header("Content-Type: ${content_type}");
+            header("Content-Type: {$content_type}");
             header('Expires: 0');
             header('Cache-Control: no-store, no-cache, must-revalidate');
             header('Pragma: no-cache');
@@ -358,7 +358,7 @@ class App {
                 $data = json_encode($data);
             }
             if ($type == 'jsonp') {
-                $data = "${callback}(${data});";
+                $data = "{$callback}({$data});";
             }
 
             echo $data;
