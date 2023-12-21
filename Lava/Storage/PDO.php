@@ -47,8 +47,8 @@ class PDO {
         );
         $this->opts = $opts;
 
-        if (isset($opts['charset']) && $opts['charset']) {
-            $this->ref->exec("SET NAMES $opts[charset]");
+        if (isset($opts['charset'])  &&  $opts['charset']) {
+            $this->ref->exec("SET NAMES {$opts['charset']}");
         }
     }
     public function __destruct () {

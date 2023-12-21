@@ -60,7 +60,7 @@ class Validator {
                 $name = 'is_' . array_shift ($opts);
 
                 if (!method_exists($this, $name)) {
-                    throw new \Exception("Unknown test: ${name}");
+                    throw new \Exception("Unknown test: {$name}");
                 }
 
                 $self = [$this, $name];

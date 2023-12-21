@@ -49,7 +49,7 @@ class Safe {
 
         $half = strlen($signed) >> 1;
 
-        list($uuid, $sign) = sscanf($signed, "%${half}s %${half}s");
+        list($uuid, $sign) = sscanf($signed, "%{$half}s %{$half}s");
 
         if ($sign == $this->_hash($uuid, $this->sign)) {
             return $uuid;

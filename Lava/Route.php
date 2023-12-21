@@ -35,7 +35,7 @@ class Route {
         );
 
         $segs        = preg_split(
-            "/([${prefix}])([\w-]+)/", $rule,
+            "/([{$prefix}])([\w-]+)/", $rule,
             -1, PREG_SPLIT_DELIM_CAPTURE
         );
         $regexp      = [];
