@@ -3,18 +3,18 @@ Lava
 
 Micro-Framework
 
-Требования: PHP 5.4+
+Requirements: PHP 5.4+, 7+, 8+
 
 
-## Установка
+## Installation
 
-Если используете [Composer](https://getcomposer.org/) то выполните команду
+If you are using [Composer](https://getcomposer.org/), run the command
 
 ```bash
 composer require illogical/lava
 ```
 
-Или можете [скачать архив](https://github.com/illogical-ru/lava/archive/master.zip), распаковать и подключить автолоадер
+Or you can [download the archive](https://github.com/illogical-ru/lava/archive/master.zip), unzip it and plug in the autoloader
 
 ```php
 require_once '.../Lava/Autoloader.php';
@@ -25,23 +25,23 @@ $al->register();
 
 
 
-## Окружение
+## Environment
 
 
 ### Lava::conf([data]) : accessor
 
-Конфиг
+Config
 
 ```php
 Lava::conf([
-    'charset' => 'utf-8',             // кодировка для HTTP заголовков
-    'type'    => 'html',              // тип по умолчанию
-    'home'    => '/path-to-home',     // домашняя папка
-    'pub'     => '/pub-uri',          // публичная папка
+    'charset' => 'utf-8',             // encoding for HTTP headers
+    'type'    => 'html',              // default type
+    'home'    => '/path-to-home',     // home folder
+    'pub'     => '/pub-uri',          // public folder
     'safe'    => [
-        'sign' => '',                 // подпись
-        'algo' => 'md5',              // алгоритм хеширования
-        'salt' => '0123456789abcdef', // набор символов для соли
+        'sign' => '',                 // signature
+        'algo' => 'md5',              // hashing algorithm
+        'salt' => '0123456789abcdef', // salt character set
     ],
 ]);
 
@@ -50,7 +50,7 @@ echo Lava::conf()->charset; # utf-8
 
 ### Lava::env() : accessor
 
-Окружение
+Environment
 
 ```php
 echo       Lava::env()->method;    # GET
@@ -59,9 +59,9 @@ var_export(Lava::env()->accept()); # array (0 => 'text/html', 1 => '*/*')
 
 ### Lava::args() : accessor
 
-Переменные
+Variables
 
-Приоритет значений: пользовательские, POST, GET
+Value priority: custom, POST, GET
 
 ```php
 // URL: http://example.com/sandbox/?foo=3&bar=4&foo=5
@@ -72,37 +72,37 @@ var_export(Lava::args()->foo()); # array (0 => '3', 1 => '5')
 
 ### Lava::cookie() : accessor
 
-Куки
+Cookies
 
-Смещения для expire:
+Offsets for expire:
 
-- s - секунда
-- m - минута
-- h - час
-- D - день
-- W - неделя
-- M - месяц
-- Y - год
+- s - second
+- m - minute
+- h - hour
+- D - day
+- W - week
+- M - month
+- Y - year
 
 ```php
-// установка
+// setting
 Lava::cookie()->foo = 'bar';
 Lava::cookie()->bar = [1, 2, 3];
 
-// чтение
+// read
 echo       Lava::cookie()->foo;    # bar
 var_export(Lava::cookie()->bar()); # array (0 => '1', 1 => '2', 2 => '3')
 
-// дополнительные параметры: expire, path, domain, secure
-Lava::cookie()->foo('bar', '1M');  // expire = 1 месяц
+// additional parameters: expire, path, domain, secure
+Lava::cookie()->foo('bar', '1M');  // expire = 1 month
 ```
 
 
 ### Lava::host([scheme [, subdomain]]) : host
 
-Возвращает хост
+Returns the name of the host
 
-Если scheme равно TRUE, то текущая
+If `scheme` is TRUE, then the current scheme
 
 ```php
 echo Lava::host();      # host
@@ -112,9 +112,9 @@ echo Lava::host('ftp'); # ftp://host
 
 ### Lava::home([node, ...]) : home
 
-Возвращает домашнюю папку
+Returns the home folder
 
-Если не установлена в конфиге, то текущую
+If not set in the config, then the current folder where the script is running
 
 ```php
 echo Lava::home();             # /path-to-home
@@ -123,9 +123,9 @@ echo Lava::home('foo', 'bar'); # /path-to-home/foo/bar
 
 ### Lava::pub([node, ...]) : pub
 
-Возвращает публичную папку
+Returns the public folder
 
-Если не установлена в конфиге, то текущую
+If not set in the config, then the current folder
 
 ```php
 echo Lava::pub();             # /pub-uri
@@ -134,11 +134,11 @@ echo Lava::pub('foo', 'bar'); # /pub-uri/foo/bar
 
 ### Lava::uri([path|route [, data [, append]]]) : uri
 
-Возвращает URI
+Returns URI
 
-Данные из data будут добавленны как query_string
+Variables from `data` will be appended as query_string
 
-Флаг append добавляет текущую query_string
+The `append` flag adds the current query_string
 
 ```php
 // URL: http://example.com/sandbox/?zzz=456
@@ -150,7 +150,7 @@ echo Lava::uri('/foo', 'bar=123', TRUE); # /foo?zzz=456&bar=123
 
 ### Lava::url([path|route [, data [, append]]]) : url
 
-Возвращает URL
+Returns URL
 
 ```php
 // URL: http://example.com/sandbox/?zzz=456
@@ -161,50 +161,50 @@ echo Lava::url('/foo', 'bar=123', TRUE); # http://example.com/foo?zzz=456&bar=12
 ```
 
 
-## Маршруты
+## Routes
 
 
 ### Lava::route([rule [, cond]]) : route
 
-Плейсхолдер `:name` соответствует полному фрагменту `([^\/]+)`
+Placeholder `:name` corresponds to the full fragment `([^\/]+)`
 
-Плейсхолдер `#name` соответствует имени`([^\/]+?)(?:\.\w*)?`
+Placeholder `#name` matches the name `([^\/]+?)(?:\.\w*)?`
 
-Плейсхолдер `*name` соответствует оставшейся части `(.+)`
+Placeholder `*name` matches the remainder `(.+)`
 
-В дополнительных условиях `cond` можно добавить ограничение по переменным окружения
+You can add a restriction on environment variables in the additional `cond` conditions
 
-Если правило начинается не со слеша, то оно будет дополнено публичной папкой `Lava::pub()`
+If the rule does not start with a slash, it will be appended to the public folder `Lava::pub()`
 
 ```php
 // URL: http://example.com/foo1.bar/foo2.bar/foo3.bar/foo4.bar
 Lava  ::route('/:node1/#node2/*node3')
-      ->to   (function($node1, $node2, $node3) { // обработчик
+      ->to   (function($node1, $node2, $node3) { // handler
           echo $node1;                           #  foo1.bar
           echo $node2;                           #  foo2
           echo $node3;                           #  foo3.bar/foo4.bar
       });
-// поиск маршрута
+// route search
 Lava::routes_match();
 
-// ограничение по окружению
+// environment constraint
 Lava::route('/foo', [
-    'method'     => ['GET', 'HEAD'], // если метод GET или HEAD
-    'user_addr'  => '127.0.0.1',     // и пользователь локальный
-    'user_agent' => '/^Mozilla/',    // и браузер Mozilla
+    'method'     => ['GET', 'HEAD'], // if the method is GET or HEAD
+    'user_addr'  => '127.0.0.1',     // and the user is local
+    'user_agent' => '/^Mozilla/',    // and the browser is Mozilla
 ]);
 
-// ограничение только по методу
+// method restriction only
 Lava::route('/foo', 'DELETE');
 ```
 
 ### Lava::route_get([rule]) : route
 
-Ограничить маршрут методом GET
+Restrict the route to the GET method
 
 ```php
 Lava::route_get ('/foo');
-// аналог
+// analog
 Lava::route     ('/foo', 'GET');
 ```
 
@@ -216,9 +216,9 @@ Lava::route_post('/foo');
 
 ### Lava::routes_match() : result
 
-Выполняет обработчики совпавших маршрутов
+Executes handlers for matched routes
 
-Если обработчик возвращает `TRUE`, то продолжается проверка остальных маршрутов, в противном случае проверка прекращается и возвращается результат обработчика
+If the handler returns `TRUE`, it continues checking the rest of the routes, otherwise it stops checking and returns the result of the handler
 
 ```php
 Lava::routes_match();
@@ -226,7 +226,7 @@ Lava::routes_match();
 
 ### route->cond(cond) : route
 
-Добавить к маршруту ограничение по окружению
+Add an environment constraint to the route
 
 ```php
 Lava::route('/foo')
@@ -235,7 +235,7 @@ Lava::route('/foo')
 
 ### route->name(name) : route
 
-Служит для преобразования маршрута в путь
+Used to convert a route to a path
 
 ```php
 // URL: http://example.com/foo/123
@@ -248,39 +248,38 @@ Lava::route('/foo/#id')
 
 ### route->to(mixed) : route
 
-Обработчик маршрута
+Route handler
 
-Метод по умолчанию `Lava::env()->method`
-
+Default method `Lava::env()->method`
 
 ```php
-// функция
+// function
 Lava::route('/foo')->to(function() {echo 'hello';});
 
-// класс|неймспейс, метод
+// class|namespace, method
 Lava::route('/foo')->to('Controller\Foo', 'bar');
 
-// файл, метод
+// file, method
 Lava::route('/foo')->to('controller/Foo.php', 'bar');
-// имя класса должно совпадать с именем файла
-// будет создан экземпляр класса Foo и вызван метод bar
+// the class name must match the file name
+// an instance of the Foo class will be created and the bar method will be called
 
-// файл, класс|неймспейс, метод
+// file, class|namespace, method
 Lava::route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
-// если класс отличается от имени файла или нужно указать неймспейс
+// if the class is different from the file name or if we need to specify a namespace
 ```
 
 
-## Рендеринг
+## Rendering
 
 
 ### Lava::render(handlers) : has_handler
 
-Выполняет обработчик с типом `Lava::type()`, если не существует, то с индексом `0`
+Executes a handler with type `Lava::type()`, if none exists, then with index `0`
 
-Если нет типа запрашиваемых данных, то используется `Lava::conf()->type`
+If there is no type of the requested data, `Lava::conf()->type` is used
 
-Если тип `json` и есть значение `Lava::args()->callback`, возвращает `JSONP`
+If the type is `json` and there is a `Lava::args()->callback` value, returns `JSONP`
 
 ```php
 Lava::route('/page')->to(function() {
@@ -309,21 +308,21 @@ Lava::routes_match(); # HTML CONTENT
 
 ### Lava::redirect([url|uri|route [, data [, append]]]) : void
 
-Добавляет в заголовок `Location`
+Appends to the `Location` header
 
 ```php
 Lava::redirect('/foo');
 ```
 
 
-## Безопасность
+## Security
 
 
 ### Lava::safe()->uuid() : uuid
 
-Возвращает UUID
+Returns UUID
 
-Указать алгоритм хеширования можно в конфиге, по умолчанию `md5`
+You can specify the hashing algorithm in the config, the default is `md5`
 
 ```php
 echo Lava::safe()->uuid(); # 055fb982653fef1ae76bde78b10f7221
@@ -331,9 +330,9 @@ echo Lava::safe()->uuid(); # 055fb982653fef1ae76bde78b10f7221
 
 ### Lava::safe()->uuid_signed() : [signed_uuid, uuid]
 
-Возвращает подписанный UUID
+Returns the signed UUID
 
-Указать подпись можно в конфиге, по умолчанию пустая строка
+You can specify the signature in the config, defaults to an empty string
 
 ```php
 list($signed, $uuid) = Lava::safe()->uuid_signed();
@@ -344,7 +343,7 @@ echo $uuid;   # 31bd185d9b3929eb56ae6e4712b73962
 
 ### Lava::safe()->check(signed_uuid) : uuid
 
-Проверяет подписанный UUID
+Checks the signed UUID
 
 ```php
 echo Lava::safe()->check($signed); # 31bd185d9b3929eb56ae6e4712b73962
@@ -352,20 +351,20 @@ echo Lava::safe()->check($signed); # 31bd185d9b3929eb56ae6e4712b73962
 
 ### Lava::safe()->salt(size) : random_string
 
-Возвращает случайную строку заданной длины
+Returns a random string of the given length
 
-Изменить список доступных символов можно в конфиге, по умолчанию `0123456789abcdef`
+You can change the list of available characters in the config, default is `0123456789abcdef`
 
 ```php
 echo Lava::safe()->salt(16); # f8da4f571ec3de9d
 ```
 
 
-## Валидация
+## Validation
 
 ### Lava::is_valid(val, tests) : bool_result
 
-Тесты:
+Tests:
 
 - tinyint[:unsigned]
 - smallint[:unsigned]
@@ -393,16 +392,16 @@ echo Lava::safe()->salt(16); # f8da4f571ec3de9d
 - function
 
 ```php
-// строка от 1 до 20 символов и соответствует Email
+// the string is between 1 and 20 characters and matches Email
 echo Lava::is_valid('me@example.com', ['string:1:20', 'email']); # TRUE
 ```
 
 
-## Хранилище\PDO
+## Storage\PDO
 
 ### Lava\Storage::source('PDO', opts) : storage
 
-Создание
+Creation
 
 ```php
 $storage = Lava\Storage::source('PDO', [
@@ -414,7 +413,7 @@ $storage = Lava\Storage::source('PDO', [
 
 ### storage->exec(query[, bind]) : row_count
 
-Запускает SQL-запрос на выполнение и возвращает количество строк, задействованых в ходе его выполнения
+Runs the SQL query and returns the number of rows involved in its execution
 
 ```php
 $storage->exec('DELETE FROM users');
@@ -432,7 +431,7 @@ $storage->exec(
 
 ### storage->fetch(query[, bind]) : row
 
-Извлечение строки из результирующего набора
+Fetching a row from the result set
 
 ```php
 $user = $storage->fetch('SELECT * FROM users WHERE id = ?', 123);
@@ -440,9 +439,9 @@ $user = $storage->fetch('SELECT * FROM users WHERE id = ?', 123);
 
 ### storage->fetch_all(query[, bind[, index]]) : rows
 
-Извлечение всех строк из результирующего набора
+Fetching all rows from the result set
 
-`index` используется для указания названия поля, значение которого станет индексом
+`index` is used to specify the name of the field whose value will become the index
 
 ```php
 $users = $storage->fetch_all('SELECT * FROM users');
@@ -450,7 +449,7 @@ $users = $storage->fetch_all('SELECT * FROM users');
 
 ### storage->last_insert_id() : id
 
-ID последней вставленной строки
+ID of the last inserted row
 
 ```php
 $id = $storage->last_insert_id();
@@ -458,7 +457,7 @@ $id = $storage->last_insert_id();
 
 ### storage->error() : error_info
 
-Сообщение об ошибке, заданное драйвером
+Driver-defined error message
 
 ```php
 $error = $storage->error();
@@ -466,21 +465,21 @@ $error = $storage->error();
 
 ### storage->factory([target]) : factory
 
-Фабрика запросов
+Query factory
 
 #### factory->get([index]) : rows
 
-Выборка данных
+Data selection
 
 ```php
-// проиндексировать данные значением id
+// index data with id value
 $data = $storage->factory('users')->get('id');
 # query: SELECT * FROM `users`
 ```
 
 #### factory->one() : row
 
-Выборка одной записи
+Selecting one record
 
 ```php
 $data = $storage->factory('users')->one();
@@ -490,7 +489,7 @@ $data = $storage->factory('users')->one();
 
 #### factory->columns(expression) : factory
 
-Столбцы или вычисления
+Columns or calculations
 
 ```php
 $data = $storage
@@ -505,7 +504,7 @@ $data = $storage
 
 #### factory->*join(target, relations[, bind]) : factory
 
-Объединение таблиц
+Table joins
 
 ```php
 $data = $storage
@@ -523,11 +522,11 @@ $data = $storage
 
 #### factory->filter*(expression) : factory
 
-Фильтрация данных: `filter_eq`, `filter_ne`, `filter_lt`, `filter_gt`, `filter_lte`, `filter_gte`, `filter_like`, `filter_not_like`, `filter_in`, `filter_not_in`, `filter_between`, `filter_is_null`, `filter_is_not_null`, `filter_raw`
+Data filtering: `filter_eq`, `filter_ne`, `filter_lt`, `filter_gt`, `filter_lte`, `filter_gte`, `filter_like`, `filter_not_like`, `filter_in`, `filter_not_in`, `filter_between`, `filter_is_null`, `filter_is_not_null`, `filter_raw`
 
-Изменение контекста: `filter_and`, `filter_or`, `filter_not`
+Context change: `filter_and`, `filter_or`, `filter_not`
 
-`filter` работает в зависимости от контекста, для данных как `filter_eq`, для замыканий как `filter_and`
+`filter` works depending on context, for data as `filter_eq`, for closures as `filter_and`
 
 ```php
 $data = $storage
@@ -550,7 +549,7 @@ $data = $storage
 $data = $storage
     ->factory('users')
     ->filter_or(function($filter) {
-        // в замыкании без префикса filter_
+        // in a closure without the filter_ prefix
         $filter ->like('name', '%test%')
                 ->and(function($filter) {
                     $filter->gt('id', 10)->lte('id', 20);
@@ -571,7 +570,7 @@ $data = $storage
 # query: SELECT * FROM `users` WHERE NOT ((`name` = ? OR `email` = ?) AND `role_id` IN (?, ?, ?))
 # bind:  'guest', 'test', 2, 4, 6
 
-// подзапросы
+// subqueries
 
 $data = $storage
     ->factory('users')
@@ -583,7 +582,7 @@ $data = $storage
 
 #### factory->group_by(expression) : factory
 
-Группировка
+Grouping
 
 ```php
 $data = $storage
@@ -596,13 +595,13 @@ $data = $storage
 
 #### factory->having*(expression) : factory
 
-По аналогии с `filter`
+Similar to `filter`
 
-Фильтрация данных: `having_eq`, `having_ne`, `having_lt`, `having_gt`, `having_lte`, `having_gte`, `having_like`, `having_not_like`, `having_in`, `having_not_in`, `having_between`, `having_is_null`, `having_is_not_null`, `having_raw`
+Filtering data: `having_eq`, `having_ne`, `having_lt`, `having_gt`, `having_lte`, `having_gte`, `having_like`, `having_not_like`, `having_in`, `having_not_in`, `having_between`, `having_is_null`, `having_is_not_null`, `having_raw`
 
-Изменение контекста: `having_and`, `having_or`, `having_not`
+Context change: `having_and`, `having_or`, `having_not`
 
-`having` работает в зависимости от контекста, для данных как `having_eq`, для замыканий как `having_and`
+`having` works depending on context, for data as `having_eq`, for closures as `having_and`
 
 ```php
 $data = $storage
@@ -619,7 +618,7 @@ $data = $storage
 
 #### factory->order_by*(expression) : factory
 
-Сортировка
+Sorting
 
 ```php
 $data = $storage
@@ -632,7 +631,7 @@ $data = $storage
 
 #### factory->limit(count[, offset]) : factory
 
-Ограничения количества возвращаемых записей
+Limits the number of records returned
 
 ```php
 $data = $storage
@@ -645,7 +644,7 @@ $data = $storage
 
 #### factory->add(data[, update]) : row_count
 
-Вставка данных
+Inserting data
 
 ```php
 $users   = $storage->factory('users');
@@ -679,7 +678,7 @@ $storage
 
 #### factory->set(data) : row_count
 
-Обновление данных
+Update data
 
 ```php
 $data = $storage
@@ -692,7 +691,7 @@ $data = $storage
 
 #### factory->del() : row_count
 
-Удаление данных
+Deleting data
 
 ```php
 $data = $storage
@@ -705,7 +704,7 @@ $data = $storage
 
 #### factory->count([key]) : count
 
-Возвращает количество выражений
+Returns the number of expressions
 
 ```php
 $data = $storage
@@ -718,7 +717,7 @@ $data = $storage
 
 #### factory->min(key) : value
 
-Возвращает минимальное значение
+Returns the minimum value
 
 ```php
 $data = $storage
@@ -731,7 +730,7 @@ $data = $storage
 
 #### factory->max(key) : value
 
-Возвращает максимальное значение
+Returns the maximum value
 
 ```php
 $data = $storage
@@ -744,7 +743,7 @@ $data = $storage
 
 #### factory->avg(key) : value
 
-Возвращает среднее значение
+Returns the average value
 
 ```php
 $data = $storage
@@ -755,7 +754,7 @@ $data = $storage
 
 #### factory->sum(key) : value
 
-Возвращает сумму значений
+Returns the sum of values
 
 ```php
 $data = $storage
