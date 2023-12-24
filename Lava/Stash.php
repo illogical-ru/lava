@@ -17,12 +17,12 @@ class Stash {
 
     public function __construct () {
 
-        $args = func_num_args( ) == 1
-            ?   func_get_arg (0)
-            :   func_get_args( );
+        $args =      func_num_args( ) == 1
+            ? (array)func_get_arg (0)
+            :        func_get_args( );
 
-        foreach ((array)$args as $key => $val) {
-            self::__set($key, $val);
+        foreach ($args as $key => $val) {
+            $this->__set ($key,   $val);
         }
     }
 
@@ -37,7 +37,7 @@ class Stash {
                 :           $data[$key];
         }
     }
-    public function __set ($key, $val) {
+    public function __set ($key,   $val) {
         return $this->data[$key] = $val;
     }
 
@@ -46,7 +46,7 @@ class Stash {
         $data = &$this->data;
 
         if     ($args) {
-            return self::__set($key, $args);
+            return $this->__set($key, $args);
         }
         elseif (isset    ($data[$key])) {
             return (array)$data[$key];

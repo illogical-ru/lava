@@ -12,7 +12,7 @@ namespace Lava;
 use Lava\Stash;
 
 
-class Env extends Stash {
+class Env {
 
     private static $aliases = [
 
@@ -34,6 +34,8 @@ class Env extends Stash {
         'query'           => 'query_string',
         'referer'         => 'http_referer',
     ];
+
+    private $data;
 
 
     public function __construct () {
@@ -98,7 +100,24 @@ class Env extends Stash {
         $data['is_rewrite'] = $data['uri']    != $uri;
         $data['is_post']    = $data['method'] == 'POST';
 
-        parent::__construct($data);
+        $this->data = new Stash ($data);
+    }
+
+
+    public function __get  ($key) {
+        return $this->data->$key;
+    }
+    public function __set  ($key,  $val) {
+        return $this->data->$key = $val;
+    }
+
+    public function __call ($key, $args) {
+        if   ($args) {
+            return $this->__set($key, $args);
+        }
+        else {
+            return $this->data->$key();
+        }
     }
 }
 

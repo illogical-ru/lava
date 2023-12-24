@@ -17,9 +17,10 @@ if (version_compare(phpversion(), '5.4') < 0) {
 
 class Autoloader {
 
-    private $include    = [],
-            $extensions = [],
-            $prefixes   = [];
+    private
+        $include    = [],
+        $extensions = [],
+        $prefixes   = [];
 
 
     public function __construct () {
