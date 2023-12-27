@@ -54,12 +54,12 @@ class Autoloader {
         return spl_autoload_unregister([$this, 'load']);
     }
 
-    public function registerPrefix   ($name, $paths) {
+    public function register_prefix   ($name, $paths) {
         $this->prefixes[$name] = (array)$paths;
     }
-    public function registerPrefixes (array $data) {
+    public function register_prefixes (array $data) {
         foreach ($data as $name => $paths) {
-            $this->registerPrefix($name, $paths);
+            $this->register_prefix($name, $paths);
         }
     }
 
