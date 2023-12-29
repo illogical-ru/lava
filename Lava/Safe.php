@@ -9,6 +9,8 @@
 
 namespace Lava;
 
+use Lava\App;
+
 
 class Safe {
 
@@ -36,7 +38,9 @@ class Safe {
 
 
     public function uuid () {
-        return $this->_hash(uniqid(), getmypid(), self::$id++);
+        return $this->_hash(
+            uniqid(), getmypid(), self::$id++, App::host()
+        );
     }
     public function uuid_signed () {
 
