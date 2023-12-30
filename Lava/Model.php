@@ -238,9 +238,9 @@ class Model {
         }
 
         return $class::find([
-            $fk => isset($this->data[$fk])
-                    ?    $this->data[$fk]
-                    :    NULL
+            $class::id() => isset($this->data[$fk])
+                            ?     $this->data[$fk]
+                            :     NULL
         ]);
     }
 
