@@ -118,6 +118,43 @@ class SQL extends Model {
         return $errors;
     }
 
+    public function create_or_update () {
+
+        $storage = $this->storage();
+
+        $data    = [];
+
+        foreach  ($this->columns() as $key) {
+            $data[$key] = isset($this->data[$key])
+                            ?   $this->data[$key]
+                            :   $this->column_default($key);
+        }
+
+        $errors  = $this->valid($data);
+
+        if (!$errors) {
+
+            $factory = $storage->factory($this->table());
+
+            if     (!$factory->add(
+                $this->export($data),
+                $this->export($this->data)
+            ))
+            {
+                $error = $storage->error();
+
+                if ($error) {
+                    $errors[] = $error;
+                }
+            }
+            elseif ( isset    ($data[$this->id()])) {
+                $this->index = $data[$this->id()];
+            }
+        }
+
+        return $errors;
+    }
+
     public function del () {
 
         if   (!$this->index) {
