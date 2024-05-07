@@ -122,7 +122,7 @@ class Args {
 
 
     private function _normalize ($val) {
-        if   (is_array($val)) {
+        if     (is_array ($val)) {
 
             foreach ($val as &$item) {
                 $item = $this->_normalize($item);
@@ -130,13 +130,11 @@ class Args {
 
             return $val;
         }
-        else {
-
-            $val = trim($val);
-
-            if ($val != '') {
-                return  $val;
-            }
+        elseif (is_string($val)) {
+            return trim  ($val);
+        }
+        else   {
+            return $val;
         }
     }
 }
