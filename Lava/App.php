@@ -10,6 +10,7 @@
 namespace Lava;
 
 use Lava\Stash;
+use Lava\Header;
 use Lava\Env;
 use Lava\Cookie;
 use Lava\Session;
@@ -24,18 +25,11 @@ class App {
 
     private static
         $conf,
+        $header,
         $env,
         $cookie,
         $session,
         $args,
-        $types  = [
-                       'application/octet-stream',
-            'txt'   => 'text/plain',
-            'html'  => 'text/html',
-            'js'    => 'text/javascript',
-            'json'  => 'application/json',
-            'jsonp' => 'application/javascript',
-        ],
         $routes = [],
         $safe;
 
@@ -53,6 +47,27 @@ class App {
         }
 
         return self::$conf;
+    }
+
+    public static function header () {
+
+        if (!self::$header) {
+            self::$header = new Header;
+        }
+
+        return self::$header;
+    }
+    public static function header_type ($type) {
+        self::header()->type($type, self::conf()->charset);
+    }
+    public static function header_401 ($auth = 'Bearer') {
+        self::header()->error_401($auth);
+    }
+    public static function header_403 () {
+        self::header()->status(403);
+    }
+    public static function header_404 () {
+        self::header()->status(404);
     }
 
     public static function env () {
@@ -203,10 +218,9 @@ class App {
     }
 
     public static function redirect () {
-
-        $location = call_user_func_array([__CLASS__, 'url'], func_get_args());
-
-        header('Location: ' . $location, TRUE, 302);
+        self::header()->location(call_user_func_array(
+            [__CLASS__, 'url'], func_get_args()
+        ));
     }
 
     public static function route ($rule = '', $cond = NULL) {
@@ -314,57 +328,38 @@ class App {
         $type     = self::type();
         $callback = self::args()->callback;
 
-        if     ( isset($handler[$type])) {
-            $case =    $handler[$type];
+        if     (isset($handler[$type])) {
+            $data =   $handler[$type];
         }
-        elseif ( isset($handler[    0])) {
-            $case =    $handler[    0];
+        elseif (isset($handler[    0])) {
+            $data =   $handler[    0];
         }
         else   {
-            return;
+            return FALSE;
         }
 
-        if     ( $type == 'json' && $callback) {
-            $type = 'jsonp';
+        self::header_type(
+            $type == 'json' && $callback ? 'js' : $type
+        );
+        self::header()->no_cache();
+
+        if     (    is_callable   ($data)) {
+            $data = call_user_func($data);
         }
 
-        if     (!headers_sent()) {
+        if     (isset($data)) {
 
-            if   (isset(self::$types[$type])) {
+            if ($type == 'json') {
 
-                $content_type = self::$types[$type];
-
-                if (self::conf()->charset) {
-                    $content_type .= '; charset=' . self::conf()->charset;
-                }
-            }
-            else {
-                $content_type = self::$types[0];
-            }
-
-            header("Content-Type: {$content_type}");
-            header('Expires: 0');
-            header('Cache-Control: no-store, no-cache, must-revalidate');
-            header('Pragma: no-cache');
-        }
-
-        $data     = is_object($case) && is_callable($case)
-            ? call_user_func ($case)
-            :                 $case;
-
-        if     ( isset($data)) {
-
-            if (preg_match('/^jsonp?$/', $type)) {
                 $data = json_encode($data);
-            }
-            if ($type == 'jsonp') {
-                $data = "{$callback}({$data});";
+
+                if ($callback) {
+                    $data = "{$callback}({$data});";
+                }
             }
 
             echo $data;
         }
-
-        return TRUE;
     }
 
     public static function safe ($opts = NULL) {
