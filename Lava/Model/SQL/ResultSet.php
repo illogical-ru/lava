@@ -97,6 +97,22 @@ class ResultSet {
         return $this->factory->del();
     }
 
+    public function count ($key = NULL) {
+        return $this->factory->count($key);
+    }
+    public function min   ($key) {
+        return $this->factory->min  ($key);
+    }
+    public function max   ($key) {
+        return $this->factory->max  ($key);
+    }
+    public function avg   ($key) {
+        return $this->factory->avg  ($key);
+    }
+    public function sum   ($key) {
+        return $this->factory->sum  ($key);
+    }
+
     public function filter ($data) {
 
         if     (is_string  ($data)) {
@@ -119,21 +135,15 @@ class ResultSet {
         return $this;
     }
 
-    public function count ($key = NULL) {
-        return $this->factory->count($key);
+    public function order_by ($exp) {
+        $this->factory->order_by($exp);
+        return $this;
     }
-    public function min   ($key) {
-        return $this->factory->min  ($key);
+    public function order_by_desc ($exp) {
+        $this->factory->order_by_desc($exp);
+        return $this;
     }
-    public function max   ($key) {
-        return $this->factory->max  ($key);
-    }
-    public function avg   ($key) {
-        return $this->factory->avg  ($key);
-    }
-    public function sum   ($key) {
-        return $this->factory->sum  ($key);
-    }
+
 }
 
 ?>
