@@ -38,12 +38,13 @@ class SQL extends Model {
 
     public function save () {
 
+        $this->errors = [];
+
         if (!$this->old) {
-            return FALSE;
+            return;
         }
 
-        $storage = $this->storage();
-
+        $id_key  = $this->id();
         $data    = [];
         $unique  = [];
 
@@ -51,16 +52,17 @@ class SQL extends Model {
 
             $data[$key] = $this->data[$key];
 
-            if (   isset              ($data[$key])
-                && $this->column_is_unique  ($key)
-                && $this->old[$key] != $data[$key]
+            if (   isset               ($data[$key])
+                && $this->column_is_unique   ($key)
+                && $this->old[$key] !== $data[$key]
             )
             {
                 $unique[] = $key;
             }
         }
 
-        $errors  = $this->valid($data);
+        $storage = $this->storage();
+        $errors  = $this->has_errors($data);
 
         foreach ($unique as $key) {
             if (   !isset($errors[$key])
@@ -76,22 +78,12 @@ class SQL extends Model {
 
         if (!$errors) {
 
-            $data    = $this->export($this->data);
-
-            foreach (array_keys($data) as $key) {
-                if   (key_exists($key, $this->old)) {
-                    unset($this->old[$key]);
-                }
-                else {
-                    unset($data     [$key]);
-                }
-            }
-
             $factory = $storage->factory($this->table());
+            $data    = $this->export($data);
 
             if     ( $this->index) {
                 $count = $factory
-                    ->filter($this->id(), $this->index)
+                    ->filter($id_key, $this->index)
                     ->set   ($data);
             }
             else   {
@@ -106,75 +98,55 @@ class SQL extends Model {
                     $errors[] = $error;
                 }
             }
-            elseif ( isset ($data[$this->id()])) {
-                $this->index = $data[$this->id()];
+            elseif ( isset    ($data[$id_key])) {
+                $this->index = $data[$id_key];
             }
             elseif (!$this->index) {
                 $this->index = $storage->last_insert_id();
-                $this->data[$this->id()] = $this->index;
+                $this->data[$id_key] = $this->index;
+            }
+
+            if     ( $count) {
+                $this->old   = [];
             }
         }
 
-        return $errors;
-    }
+        $this->errors = $errors;
 
-    public function create_or_update () {
-
-        $storage = $this->storage();
-
-        $data    = [];
-
-        foreach  ($this->columns() as $key) {
-            $data[$key] = isset($this->data[$key])
-                            ?   $this->data[$key]
-                            :   $this->column_default($key);
-        }
-
-        $errors  = $this->valid($data);
-
-        if (!$errors) {
-
-            $factory = $storage->factory($this->table());
-
-            if     (!$factory->add(
-                $this->export($data),
-                $this->export($this->data)
-            ))
-            {
-                $error = $storage->error();
-
-                if ($error) {
-                    $errors[] = $error;
-                }
-            }
-            elseif ( isset    ($data[$this->id()])) {
-                $this->index = $data[$this->id()];
-            }
-        }
-
-        return $errors;
+        return empty($errors);
     }
 
     public function del () {
+
+        $this->errors = [];
 
         if   (!$this->index) {
             return FALSE;
         }
 
-        $count = $this
-            ->storage()
+        $storage = $this->storage();
+
+        $count   = $storage
             ->factory($this->table())
             ->filter ($this->id(), $this->index)
             ->del    ();
 
         if   ( $count) {
 
-            $this->index = NULL;
-            $this->old   = $this->data;
+            foreach ($this as  $key => $val) {
+                $this->$key = is_array($val) ? [] : NULL;
+            }
 
             return TRUE;
         }
         else {
+
+            $error = $storage->error();
+
+            if ($error) {
+                $this->errors[] = $error;
+            }
+
             return FALSE;
         }
     }

@@ -143,7 +143,6 @@ class ResultSet {
         $this->factory->order_by_desc($exp);
         return $this;
     }
-
 }
 
 ?>

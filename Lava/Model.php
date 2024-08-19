@@ -25,20 +25,19 @@ class Model {
         $index,
         $data    = [],
         $old     = [],
-        $rels    = [];
+        $rels    = [],
+        $errors  = [];
 
 
     public function __construct (array $data = []) {
 
         if     (!$data) {
-
             foreach ($this->columns() as $key) {
                 $this->data[$key] = $this->column_default($key);
+                $this->old [$key] = NULL;
             }
-
-            $this->old = $this->data;
         }
-        elseif (!isset  ($data[$this->id()])) {
+        elseif (!isset($data[$this->id()])) {
             throw new \Exception(sprintf(
                 'No identifier specified for Model "%s"',
                 $this->classname()
@@ -150,7 +149,7 @@ class Model {
             return $class::$columns[$key]['not_null'];
         }
     }
-    public static function column_is_valid    ($key, $val) {
+    public static function column_has_error   ($key, $val) {
 
         $class = self::classname();
         $error = NULL;
@@ -181,14 +180,14 @@ class Model {
         return (int)$class::$limit;
     }
 
-    public static function valid ($data) {
+    public static function has_errors ($data) {
 
         $class  = self::classname();
-        $errors = NULL;
+        $errors = [];
 
         foreach ($data as $key => $val) {
 
-            $error = $class::column_is_valid($key, $val);
+            $error = $class::column_has_error($key, $val);
 
             if ($error) {
                 $errors[$key] = $error;
@@ -207,6 +206,10 @@ class Model {
 
     public function as_array () {
         return $this->data;
+    }
+
+    public function errors () {
+        return $this->errors;
     }
 
     public function has_one    ($class, $fk = NULL) {
