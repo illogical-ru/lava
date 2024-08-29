@@ -8,13 +8,26 @@ Requirements: PHP 5.4+, 7+, 8+
 
 ## Installation
 
+
 If you are using [Composer](https://getcomposer.org/), run the command
 
 ```bash
 composer require illogical/lava
 ```
 
-Or you can [download the archive](https://github.com/illogical-ru/lava/archive/master.zip), unzip it and plug in the autoloader
+Or you can [download the archive](https://github.com/illogical-ru/lava/archive/master.zip)
+
+
+## Usage
+
+
+Use the Lava\App class
+
+```php
+use Lava\App;
+```
+
+If you downloaded the archive, use the autoloader
 
 ```php
 require_once '.../Lava/Autoloader.php';
@@ -24,40 +37,51 @@ $al->register();
 ```
 
 
-
 ## Environment
 
 
-### Lava::conf([data]) : accessor
+### Lava\App::conf([data]) : accessor
 
 Config
 
 ```php
-Lava::conf([
+App::conf([
     'charset' => 'utf-8',             // encoding for HTTP headers
     'type'    => 'html',              // default type
     'home'    => '/path-to-home',     // home folder
     'pub'     => '/pub-uri',          // public folder
     'safe'    => [
-        'sign' => '',                 // signature
+        // default values
         'algo' => 'md5',              // hashing algorithm
+        'sign' => '',                 // signature
         'salt' => '0123456789abcdef', // salt character set
+    ],
+    'storage' => [
+        // default storage, named "0"
+        [
+            'driver'   => 'PDO',
+            'dsn'      => 'mysql:.../mysqld.sock;dbname=test;',
+            'username' => 'root',
+            'password' =>  NULL,
+        ],
+        'db2' => [...],
+        ...
     ],
 ]);
 
-echo Lava::conf()->charset; # utf-8
+echo App::conf()->charset; # utf-8
 ```
 
-### Lava::env() : accessor
+### Lava\App::env() : accessor
 
 Environment
 
 ```php
-echo       Lava::env()->method;    # GET
-var_export(Lava::env()->accept()); # array (0 => 'text/html', 1 => '*/*')
+echo       App::env()->method;    # GET
+var_export(App::env()->accept()); # array (0 => 'text/html', 1 => '*/*')
 ```
 
-### Lava::args() : accessor
+### Lava\App::args() : accessor
 
 Variables
 
@@ -66,11 +90,11 @@ Value priority: custom, POST, GET
 ```php
 // URL: http://example.com/sandbox/?foo=3&bar=4&foo=5
 
-echo       Lava::args()->foo;    # 5
-var_export(Lava::args()->foo()); # array (0 => '3', 1 => '5')
+echo       App::args()->foo;    # 5
+var_export(App::args()->foo()); # array (0 => '3', 1 => '5')
 ```
 
-### Lava::cookie() : accessor
+### Lava\App::cookie() : accessor
 
 Cookies
 
@@ -86,53 +110,53 @@ Offsets for expire:
 
 ```php
 // setting
-Lava::cookie()->foo = 'bar';
-Lava::cookie()->bar = [1, 2, 3];
+App::cookie()->foo = 'bar';
+App::cookie()->bar = [1, 2, 3];
 
 // read
-echo       Lava::cookie()->foo;    # bar
-var_export(Lava::cookie()->bar()); # array (0 => '1', 1 => '2', 2 => '3')
+echo       App::cookie()->foo;    # bar
+var_export(App::cookie()->bar()); # array (0 => '1', 1 => '2', 2 => '3')
 
 // additional parameters: expire, path, domain, secure
-Lava::cookie()->foo('bar', '1M');  // expire = 1 month
+App::cookie()->foo('bar', '1M');  // expire = 1 month
 ```
 
 
-### Lava::host([scheme [, subdomain]]) : host
+### Lava\App::host([scheme [, subdomain]]) : host
 
 Returns the name of the host
 
 If `scheme` is TRUE, then the current scheme
 
 ```php
-echo Lava::host();      # host
-echo Lava::host(TRUE);  # http://host
-echo Lava::host('ftp'); # ftp://host
+echo App::host();      # host
+echo App::host(TRUE);  # http://host
+echo App::host('ftp'); # ftp://host
 ```
 
-### Lava::home([node, ...]) : home
+### Lava\App::home([node, ...]) : home
 
 Returns the home folder
 
 If not set in the config, then the current folder where the script is running
 
 ```php
-echo Lava::home();             # /path-to-home
-echo Lava::home('foo', 'bar'); # /path-to-home/foo/bar
+echo App::home();             # /path-to-home
+echo App::home('foo', 'bar'); # /path-to-home/foo/bar
 ```
 
-### Lava::pub([node, ...]) : pub
+### Lava\App::pub([node, ...]) : pub
 
 Returns the public folder
 
 If not set in the config, then the current folder
 
 ```php
-echo Lava::pub();             # /pub-uri
-echo Lava::pub('foo', 'bar'); # /pub-uri/foo/bar
+echo App::pub();             # /pub-uri
+echo App::pub('foo', 'bar'); # /pub-uri/foo/bar
 ```
 
-### Lava::uri([path|route [, data [, append]]]) : uri
+### Lava\App::uri([path|route [, data [, append]]]) : uri
 
 Returns URI
 
@@ -143,28 +167,28 @@ The `append` flag adds the current query_string
 ```php
 // URL: http://example.com/sandbox/?zzz=456
 
-echo Lava::uri();                        # /sandbox/
-echo Lava::uri('foo', ['bar' => 123]);   # /sandbox/foo?bar=123
-echo Lava::uri('/foo', 'bar=123', TRUE); # /foo?zzz=456&bar=123
+echo App::uri();                        # /sandbox/
+echo App::uri('foo', ['bar' => 123]);   # /sandbox/foo?bar=123
+echo App::uri('/foo', 'bar=123', TRUE); # /foo?zzz=456&bar=123
 ```
 
-### Lava::url([path|route [, data [, append]]]) : url
+### Lava\App::url([path|route [, data [, append]]]) : url
 
 Returns URL
 
 ```php
 // URL: http://example.com/sandbox/?zzz=456
 
-echo Lava::url();                        # http://example.com/sandbox/
-echo Lava::url('foo', ['bar' => 123]);   # http://example.com/sandbox/foo?bar=123
-echo Lava::url('/foo', 'bar=123', TRUE); # http://example.com/foo?zzz=456&bar=123
+echo App::url();                        # http://example.com/sandbox/
+echo App::url('foo', ['bar' => 123]);   # http://example.com/sandbox/foo?bar=123
+echo App::url('/foo', 'bar=123', TRUE); # http://example.com/foo?zzz=456&bar=123
 ```
 
 
 ## Routes
 
 
-### Lava::route([rule [, cond]]) : route
+### Lava\App::route([rule [, cond]]) : route
 
 Placeholder `:name` corresponds to the full fragment `([^\/]+)`
 
@@ -174,54 +198,54 @@ Placeholder `*name` matches the remainder `(.+)`
 
 You can add a restriction on environment variables in the additional `cond` conditions
 
-If the rule does not start with a slash, it will be appended to the public folder `Lava::pub()`
+If the rule does not start with a slash, it will be appended to the public folder `Lava\App::pub()`
 
 ```php
 // URL: http://example.com/foo1.bar/foo2.bar/foo3.bar/foo4.bar
-Lava  ::route('/:node1/#node2/*node3')
-      ->to   (function($node1, $node2, $node3) { // handler
-          echo $node1;                           #  foo1.bar
-          echo $node2;                           #  foo2
-          echo $node3;                           #  foo3.bar/foo4.bar
-      });
+App ::route('/:node1/#node2/*node3')
+    ->to   (function($node1, $node2, $node3) { // handler
+        echo $node1;                           #  foo1.bar
+        echo $node2;                           #  foo2
+        echo $node3;                           #  foo3.bar/foo4.bar
+    });
 // route search
-Lava::routes_match();
+App::routes_match();
 
 // environment constraint
-Lava::route('/foo', [
+App::route('/foo', [
     'method'     => ['GET', 'HEAD'], // if the method is GET or HEAD
     'user_addr'  => '127.0.0.1',     // and the user is local
     'user_agent' => '/^Mozilla/',    // and the browser is Mozilla
 ]);
 
 // method restriction only
-Lava::route('/foo', 'DELETE');
+App::route('/foo', 'DELETE');
 ```
 
-### Lava::route_get([rule]) : route
+### Lava\App::route_get([rule]) : route
 
 Restrict the route to the GET method
 
 ```php
-Lava::route_get ('/foo');
+App::route_get ('/foo');
 // analog
-Lava::route     ('/foo', 'GET');
+App::route     ('/foo', 'GET');
 ```
 
-### Lava::route_post([rule]) : route
+### Lava\App::route_post([rule]) : route
 
 ```php
-Lava::route_post('/foo');
+App::route_post('/foo');
 ```
 
-### Lava::routes_match() : result
+### Lava\App::routes_match() : result
 
 Executes handlers for matched routes
 
 If the handler returns `TRUE`, it continues checking the rest of the routes, otherwise it stops checking and returns the result of the handler
 
 ```php
-Lava::routes_match();
+App::routes_match();
 ```
 
 ### route->cond(cond) : route
@@ -229,7 +253,7 @@ Lava::routes_match();
 Add an environment constraint to the route
 
 ```php
-Lava::route('/foo')
+App ::route('/foo')
     ->cond (['user_addr' => '/^192\.168\./']);
 ```
 
@@ -239,10 +263,10 @@ Used to convert a route to a path
 
 ```php
 // URL: http://example.com/foo/123
-Lava::route('/foo/#id')
+App ::route('/foo/#id')
     ->name ('route_name')
     ->to   (function($id) {
-        echo Lava::uri('route_name', ['id' => $id + 1]); #  /foo/124
+        echo App::uri('route_name', ['id' => $id + 1]); #  /foo/124
     });
 ```
 
@@ -250,22 +274,22 @@ Lava::route('/foo/#id')
 
 Route handler
 
-Default method `Lava::env()->method`
+Default method `Lava\App::env()->method`
 
 ```php
 // function
-Lava::route('/foo')->to(function() {echo 'hello';});
+App::route('/foo')->to(function() {echo 'hello';});
 
 // class|namespace, method
-Lava::route('/foo')->to('Controller\Foo', 'bar');
+App::route('/foo')->to('Controller\Foo', 'bar');
 
 // file, method
-Lava::route('/foo')->to('controller/Foo.php', 'bar');
 // the class name must match the file name
 // an instance of the Foo class will be created and the bar method will be called
+App::route('/foo')->to('controller/Foo.php', 'bar');
 
 // file, class|namespace, method
-Lava::route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
+App::route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
 // if the class is different from the file name or if we need to specify a namespace
 ```
 
@@ -273,96 +297,96 @@ Lava::route('/foo')->to('controller/Foo.php', 'Ctrl\Foo', 'bar');
 ## Rendering
 
 
-### Lava::render(handlers) : has_handler
+### Lava\App::render(handlers) : has_handler
 
-Executes a handler with type `Lava::type()`, if none exists, then with index `0`
+Executes a handler with type `Lava\App::type()`, if none exists, then with index `0`
 
-If there is no type of the requested data, `Lava::conf()->type` is used
+If there is no type of the requested data, `Lava\App::conf()->type` is used
 
-If the type is `json` and there is a `Lava::args()->callback` value, returns `JSONP`
+If the type is `json` and there is a `Lava\App::args()->callback` value, returns `JSONP`
 
 ```php
-Lava::route('/page')->to(function() {
-    Lava::render([
+App::route('/page')->to(function() {
+    App::render([
         'html' => 'HTML CONTENT',
         'json' => ['bar' => 123],
         function () {
-            echo 'OTHER TYPE: ' . Lava::type();
+            echo 'OTHER TYPE: ' . App::type();
         },
     ]);
 });
 
 // URL: http://example.com/page.html
-Lava::routes_match(); # HTML CONTENT
+App::routes_match(); # HTML CONTENT
 
 // URL: http://example.com/page.json
-Lava::routes_match(); # {"bar":123}
+App::routes_match(); # {"bar":123}
 
 // URL: http://example.com/page.xml
-Lava::routes_match(); # OTHER TYPE: xml
+App::routes_match(); # OTHER TYPE: xml
 
-// если Lava::conf()->type == 'html'
+// if Lava\App::conf()->type == 'html'
 // URL: http://example.com/page
-Lava::routes_match(); # HTML CONTENT
+App::routes_match(); # HTML CONTENT
 ```
 
-### Lava::redirect([url|uri|route [, data [, append]]]) : void
+### Lava\App::redirect([url|uri|route [, data [, append]]]) : void
 
 Appends to the `Location` header
 
 ```php
-Lava::redirect('/foo');
+App::redirect('/foo');
 ```
 
 
 ## Security
 
 
-### Lava::safe()->uuid() : uuid
+### Lava\App::safe()->uuid() : uuid
 
 Returns UUID
 
 You can specify the hashing algorithm in the config, the default is `md5`
 
 ```php
-echo Lava::safe()->uuid(); # 055fb982653fef1ae76bde78b10f7221
+echo App::safe()->uuid(); # 055fb982653fef1ae76bde78b10f7221
 ```
 
-### Lava::safe()->uuid_signed() : [signed_uuid, uuid]
+### Lava\App::safe()->uuid_signed() : [signed_uuid, uuid]
 
 Returns the signed UUID
 
 You can specify the signature in the config, defaults to an empty string
 
 ```php
-list($signed, $uuid) = Lava::safe()->uuid_signed();
+list($signed, $uuid) = App::safe()->uuid_signed();
 
 echo $signed; # 31bd185d9b3929eb56ae6e4712b73962dcd6b2b55b5287117b9d65380f4146e3
 echo $uuid;   # 31bd185d9b3929eb56ae6e4712b73962
 ```
 
-### Lava::safe()->check(signed_uuid) : uuid
+### Lava\App::safe()->check(signed_uuid) : uuid
 
 Checks the signed UUID
 
 ```php
-echo Lava::safe()->check($signed); # 31bd185d9b3929eb56ae6e4712b73962
+echo App::safe()->check($signed); # 31bd185d9b3929eb56ae6e4712b73962
 ```
 
-### Lava::safe()->salt(size) : random_string
+### Lava\App::safe()->salt(size) : random_string
 
 Returns a random string of the given length
 
 You can change the list of available characters in the config, default is `0123456789abcdef`
 
 ```php
-echo Lava::safe()->salt(16); # f8da4f571ec3de9d
+echo App::safe()->salt(16); # f8da4f571ec3de9d
 ```
 
 
 ## Validation
 
-### Lava::is_valid(val, tests) : bool_result
+### Lava\App::is_valid(val, tests) : bool_result
 
 Tests:
 
@@ -393,7 +417,7 @@ Tests:
 
 ```php
 // the string is between 1 and 20 characters and matches Email
-echo Lava::is_valid('me@example.com', ['string:1:20', 'email']); # TRUE
+echo App::is_valid('me@example.com', ['string:1:20', 'email']); # TRUE
 ```
 
 
@@ -761,4 +785,170 @@ $data = $storage
     ->factory('users')
     ->sum('id');
 # query: SELECT SUM(`id`) AS `val` FROM `users`
+```
+
+
+## Model\SQL
+
+
+```php
+use Lava\Model\SQL;
+
+class User extends SQL {
+
+    // meta data
+    protected static
+
+        // optionally, storage name
+        // name from Lava\App::conf()->storage()
+        // default is "0"
+        $storage = '0',
+
+        // optionally, table name
+        // defaults to a class name in snake case with an "s" at the end
+        $table   = 'users',
+
+        // optionally, the name of the primary key
+        // defaults to "id"
+        $id      = 'id',
+
+        // columns description
+        $columns = [
+            'key' => [
+                // value cannot be NULL
+                'not_null' => FALSE|TRUE,
+                // value is unique
+                'unique'   => FALSE|TRUE,
+                // default value
+                'default'  => VALUE,
+                // validation tests
+                'valid'    => [tests],
+            ],
+            ...
+        ],
+
+        // optionally, default limit
+        // if not specified at selection
+        // unrestricted by default
+        $limit   = 0;
+}
+```
+
+
+### Creation
+
+
+```php
+$user = new User;
+
+$user->name  = 'foo';
+$user->email = 'mail@example.com';
+
+$user->save();
+```
+
+
+### Selecting
+
+
+```php
+// selecting one object by ID
+$user  = User::one(123);
+
+echo $user->name;
+
+// selecting a collection by condition
+$users = User::find(['active' => TRUE])->get();
+
+foreach ($users as $user) {
+    echo $user->name;
+}
+```
+
+
+### Default values
+
+
+```php
+class Session extends SQL {
+
+    // method name must start with the prefix "column_default_"
+    public static function column_default_created () {
+        return date('Y-m-d H:i:s');
+    }
+}
+
+$session = new Session;
+
+echo $session->created; // now
+```
+
+
+### Relationship
+
+
+```php
+class User extends SQL {
+
+    public function sessions () {
+        return $this
+            ->has_many(Session::classname());
+    }
+
+    // additional filters
+    public function active_sessions () {
+        return $this
+            ->sessions()
+            ->filter(['active' => TRUE]);
+    }
+}
+
+class Session extends SQL {
+
+    public function user () {
+        return $this->belongs_to(User::classname());
+    }
+}
+
+$user   = User::one(123);
+
+// property returns a collection
+foreach ($user->sessions as $session) {
+    echo $session->id;
+}
+
+// method returns resultset
+$active = $user ->sessions()
+                ->filter(['active' => TRUE])
+                ->get();
+
+// similarly
+$active = $user ->active_sessions;
+```
+
+
+### Import & Export
+
+
+```php
+class Session extends SQL {
+
+    public static function import ($data) {
+
+        if (isset($data['ip'])) {
+            $data['ip'] = long2ip($data['ip']);
+        }
+
+        return $data;
+    }
+
+    public static function export ($data) {
+
+        if (isset($data['ip'])) {
+            $data['ip'] = ip2long($data['ip']);
+        }
+
+        return $data;
+    }
+}
 ```
